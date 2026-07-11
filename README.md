@@ -37,9 +37,10 @@ Esta versión (10.3) está optimizada para la placa profesional **JC4827W543** (
 | **Eje Y - DIR** | 7 |
 | **Eje Y - EN** | 15 |
 | **Eje Y - LIMIT** | 16 |
-| **Touch SDA** | 19 |
-| **Touch SCL** | 20 |
-| **Touch INT** | 18 |
+| **Touch SDA** | 8 |
+| **Touch SCL** | 4 |
+| **Touch INT** | 3 |
+| **Touch RESET** | 38 |
 
 ## 💻 Instalación y Carga
 

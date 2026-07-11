@@ -15,10 +15,11 @@ constexpr uint8_t LVGL_TICK_PERIOD = 5;
 
 // Configuración Touch Controller GT911 (usando TouchLib)
 namespace Touch {
-constexpr uint8_t SDA_PIN = 19; // Pines específicos de JC4827W543
-constexpr uint8_t SCL_PIN = 20;
-constexpr uint8_t INT_PIN = 18;
-constexpr uint8_t RST_PIN = -1; // No tiene reset pin en esta placa
+// Pines funcionales validados en PINS_JC4827W543.h
+constexpr uint8_t SDA_PIN = 8;
+constexpr uint8_t SCL_PIN = 4;
+constexpr uint8_t INT_PIN = 3;
+constexpr uint8_t RST_PIN = 38;
 constexpr uint8_t SW1_PIN = 0;  // Botón físico SW1 (IO0)
 } // namespace Touch
 
