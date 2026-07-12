@@ -156,3 +156,30 @@ Implementacion:
 
 El objetivo es comprobar que el firmware puede empezar a consumir `core/` sin
 cambiar comportamiento visible.
+
+### Equivalencia numerica revisada
+
+Se comparo el calculo anterior de `ConfigTransformador::calcular_parametros()`
+con `winding::calculate_transformer()` usando las mismas constantes mecanicas:
+
+- `PASOS_POR_MM_X = 320.0`
+- `PASOS_POR_VUELTA_Y = 3200`
+
+| Caso | Diametro | Longitud | Vueltas | Vueltas/capa | Capas | Grosor | Ratio X/Y | Limite X |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Base | 0.5 | 50 | 1000 | 100 | 10 | 5.0 | 0.05 | 16000 |
+| Hilo fino | 0.2 | 10 | 500 | 50 | 10 | 2.0 | 0.02 | 3200 |
+| Diametro cero | 0.0 | 50 | 1000 | 0 | 0 | 0.0 | 0.0 | 16000 |
+| Longitud no divisible | 0.3 | 10 | 100 | 33 | 4 | 1.2 | 0.03 | 3200 |
+
+Conclusiones:
+
+- `floor(longitud / diametro)` mantiene el mismo resultado para
+  `vueltas_por_capa`.
+- `ceil(vueltas_total / vueltas_por_capa)` mantiene el mismo resultado para
+  `capas_estimadas`.
+- `roundf(longitud * pasos_por_mm)` y `std::round(...)` mantienen el mismo
+  resultado en los casos revisados.
+- Los casts a enteros mantienen los mismos valores observados.
+- `calcular_parametros()` sigue sin validar entradas; la validacion permanece
+  separada en `ConfigTransformador::validar()`.
