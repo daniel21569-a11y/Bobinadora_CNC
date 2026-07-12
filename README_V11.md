@@ -214,3 +214,23 @@ Conclusiones:
 - Los casts a enteros mantienen los mismos valores observados.
 - `calcular_parametros()` sigue sin validar entradas; la validacion permanece
   separada en `ConfigTransformador::validar()`.
+
+## Tipos preparatorios de estado
+
+Se anade `core/include/winding/machine_state.h` como preparacion para una futura
+separacion entre UI, estado logico y motor.
+
+Estos tipos son puros y no estan conectados todavia al firmware:
+
+- `MachineStatus`
+- `WindingMode`
+- `MachineCommand`
+- `MachineError`
+- `MachineSnapshot`
+
+`MachineSnapshot` refleja los campos logicos principales que hoy viven en
+`EstadoSistema`, pero sin `volatile`, sin metodos con efectos, sin `Serial` y
+sin dependencias de Arduino, LVGL, FreeRTOS, pines o drivers.
+
+Esta fase no cambia comportamiento visible. El firmware sigue usando
+`EstadoSistema` y `motor_task_optimized.h` como antes.
