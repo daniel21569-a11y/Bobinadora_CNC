@@ -234,3 +234,29 @@ sin dependencias de Arduino, LVGL, FreeRTOS, pines o drivers.
 
 Esta fase no cambia comportamiento visible. El firmware sigue usando
 `EstadoSistema` y `motor_task_optimized.h` como antes.
+
+## Adaptadores firmware -> core
+
+Se anade `include/winding_core_adapters.h` como frontera preparatoria entre los
+tipos actuales del firmware y los tipos puros de `machine_state.h`.
+
+El adaptador es header-only y no esta conectado todavia al firmware. Solo define
+conversiones de firmware hacia core:
+
+- `EstadoBobinado` -> `MachineStatus`
+- `ModoBobinado` -> `WindingMode`
+- `TipoMovimiento` -> `MachineCommand`
+- `EstadoSistema` -> `MachineSnapshot`
+
+No existen conversiones core -> firmware en esta fase.
+
+Notas de mapeo:
+
+- `MachineStatus::Complete` no tiene equivalente desde el firmware actual.
+- `EstadoBobinado::ERROR` se refleja como `MachineSnapshot.error =
+  MachineError::Unknown`.
+- `TipoMovimiento` solo cubre movimiento manual y homing; no representa
+  comandos de alto nivel como Start, Pause, Resume o Stop.
+
+Esta fase no cambia comportamiento visible porque ningun archivo del firmware
+incluye todavia el adaptador.
