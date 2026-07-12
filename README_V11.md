@@ -279,3 +279,12 @@ incluye todavia el adaptador.
   - `lib/PINS_JC4827W543.h`
   - `platformio.ini`
   - `src/main.cpp`
+
+## Checkpoint de validacion en placa
+
+Validado en placa:
+
+- arranque OK
+- UI OK
+- touch OK
+- navegacion basica OK
