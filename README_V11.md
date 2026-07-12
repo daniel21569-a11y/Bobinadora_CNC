@@ -288,3 +288,18 @@ Validado en placa:
 - UI OK
 - touch OK
 - navegacion basica OK
+
+## Validacion segura de parametros
+
+Los handlers de configuracion validan usando copias temporales antes de escribir
+en `Sistema::config_transformador` o `Sistema::config_nido_abeja`.
+
+Si la validacion falla:
+
+- se mantiene la pantalla de configuracion actual
+- no se guarda en `Preferences`
+- no se navega a la pantalla de bobinado
+- se muestra un dialogo claro de parametros invalidos
+
+Si la validacion pasa, el comportamiento esperado se mantiene: calcular
+parametros, guardar configuracion y navegar segun el boton usado.

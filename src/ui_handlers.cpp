@@ -7,6 +7,99 @@
 
 namespace UIHandlers {
 
+static void close_error_dialog(lv_event_t *e) {
+  lv_obj_t *button = (lv_obj_t *)lv_event_get_target(e);
+  lv_obj_t *dialog = lv_obj_get_parent(button);
+  lv_obj_delete(dialog);
+}
+
+static void show_config_error(const char *message) {
+  lv_obj_t *dialog = lv_obj_create(lv_layer_top());
+  lv_obj_set_size(dialog, 360, 135);
+  lv_obj_center(dialog);
+  lv_obj_set_style_bg_color(dialog, UI::color_bg_card, 0);
+  lv_obj_set_style_border_color(dialog, UI::color_danger, 0);
+  lv_obj_set_style_border_width(dialog, 2, 0);
+  lv_obj_set_style_pad_all(dialog, 12, 0);
+  lv_obj_set_layout(dialog, LV_LAYOUT_FLEX);
+  lv_obj_set_flex_flow(dialog, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_flex_align(dialog, LV_FLEX_ALIGN_SPACE_BETWEEN,
+                        LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+  lv_obj_t *title = lv_label_create(dialog);
+  lv_label_set_text(title, "Parametros invalidos");
+  lv_obj_set_style_text_color(title, UI::color_danger, 0);
+  lv_obj_set_style_text_font(title, &lv_font_montserrat_16, 0);
+
+  lv_obj_t *text = lv_label_create(dialog);
+  lv_label_set_text(text, message);
+  lv_label_set_long_mode(text, LV_LABEL_LONG_WRAP);
+  lv_obj_set_width(text, LV_PCT(100));
+  lv_obj_set_style_text_color(text, UI::color_text, 0);
+  lv_obj_set_style_text_align(text, LV_TEXT_ALIGN_CENTER, 0);
+
+  lv_obj_t *button = lv_btn_create(dialog);
+  lv_obj_set_size(button, 100, 34);
+  lv_obj_add_style(button, &UI::style_btn_primary, 0);
+  lv_obj_add_event_cb(button, close_error_dialog, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_t *button_label = lv_label_create(button);
+  lv_label_set_text(button_label, "OK");
+  lv_obj_center(button_label);
+}
+
+static bool save_transformador_from_ui_if_valid() {
+  ConfigTransformador candidate = Sistema::config_transformador;
+  candidate.diametro_alambre_mm =
+      atof(lv_textarea_get_text(UIScreens::ta_diametro_alambre));
+  candidate.longitud_bobinado_mm =
+      atof(lv_textarea_get_text(UIScreens::ta_longitud_bobinado));
+  candidate.vueltas_total =
+      atoi(lv_textarea_get_text(UIScreens::ta_vueltas_total));
+  candidate.velocidad_rpm =
+      atof(lv_textarea_get_text(UIScreens::ta_velocidad_rpm));
+  candidate.detener_en_capas =
+      lv_obj_has_state(UIScreens::sw_detener_en_capas, LV_STATE_CHECKED);
+
+  if (!candidate.validar()) {
+    show_config_error("Revisa diametro, ancho, vueltas y RPM.");
+    return false;
+  }
+
+  candidate.calcular_parametros();
+  Sistema::config_transformador = candidate;
+  Sistema::config_transformador.imprimir_debug();
+  Persistence.saveTransformadorConfig();
+  return true;
+}
+
+static bool save_honeycomb_from_ui_if_valid() {
+  ConfigNidoAbeja candidate = Sistema::config_nido_abeja;
+  candidate.diametro_hilo =
+      atof(lv_textarea_get_text(UIScreens::ta_hc_diametro_hilo));
+  candidate.diametro_carrete =
+      atof(lv_textarea_get_text(UIScreens::ta_hc_diametro_carrete));
+  candidate.ancho_carrete =
+      atof(lv_textarea_get_text(UIScreens::ta_hc_ancho_carrete));
+  candidate.desfase_grados =
+      atof(lv_textarea_get_text(UIScreens::ta_hc_desfase_grados));
+  candidate.num_vueltas =
+      atoi(lv_textarea_get_text(UIScreens::ta_hc_num_vueltas));
+  candidate.velocidad_rpm =
+      atof(lv_textarea_get_text(UIScreens::ta_hc_velocidad));
+
+  if (!candidate.validar()) {
+    show_config_error("Revisa diametro, ancho, desfase, vueltas y RPM.");
+    return false;
+  }
+
+  candidate.calcular_parametros();
+  Sistema::config_nido_abeja = candidate;
+  Sistema::config_nido_abeja.imprimir_debug();
+  Persistence.saveHoneycombConfig();
+  return true;
+}
+
 void btn_navegacion_handler(lv_event_t *e) {
   lv_obj_t *target = (lv_obj_t *)lv_event_get_target(e);
   const char *id = (const char *)lv_obj_get_user_data(target);
@@ -201,61 +294,31 @@ void screen_winding_load_handler(lv_event_t *e) {
 }
 
 void back_and_save_handler(lv_event_t *e) {
-  Sistema::config_transformador.diametro_alambre_mm =
-      atof(lv_textarea_get_text(UIScreens::ta_diametro_alambre));
-  Sistema::config_transformador.longitud_bobinado_mm =
-      atof(lv_textarea_get_text(UIScreens::ta_longitud_bobinado));
-  Sistema::config_transformador.vueltas_total =
-      atoi(lv_textarea_get_text(UIScreens::ta_vueltas_total));
-  Sistema::config_transformador.velocidad_rpm =
-      atof(lv_textarea_get_text(UIScreens::ta_velocidad_rpm));
-  Sistema::config_transformador.detener_en_capas =
-      lv_obj_has_state(UIScreens::sw_detener_en_capas, LV_STATE_CHECKED);
-
-  if (Sistema::config_transformador.validar()) {
-    Sistema::config_transformador.calcular_parametros();
-    Sistema::config_transformador.imprimir_debug();
-    Persistence.saveTransformadorConfig();
+  if (save_transformador_from_ui_if_valid()) {
+    lv_scr_load_anim(UIScreens::screen_main, LV_SCR_LOAD_ANIM_FADE_IN, 300, 0,
+                     false);
   }
-
-  lv_scr_load_anim(UIScreens::screen_main, LV_SCR_LOAD_ANIM_FADE_IN, 300, 0,
-                   false);
 }
 
 void back_and_save_honeycomb_handler(lv_event_t *e) {
-  Sistema::config_nido_abeja.diametro_hilo =
-      atof(lv_textarea_get_text(UIScreens::ta_hc_diametro_hilo));
-  Sistema::config_nido_abeja.diametro_carrete =
-      atof(lv_textarea_get_text(UIScreens::ta_hc_diametro_carrete));
-  Sistema::config_nido_abeja.ancho_carrete =
-      atof(lv_textarea_get_text(UIScreens::ta_hc_ancho_carrete));
-  Sistema::config_nido_abeja.desfase_grados =
-      atof(lv_textarea_get_text(UIScreens::ta_hc_desfase_grados));
-  Sistema::config_nido_abeja.num_vueltas =
-      atoi(lv_textarea_get_text(UIScreens::ta_hc_num_vueltas));
-  Sistema::config_nido_abeja.velocidad_rpm =
-      atof(lv_textarea_get_text(UIScreens::ta_hc_velocidad));
-
-  if (Sistema::config_nido_abeja.validar()) {
-    Sistema::config_nido_abeja.calcular_parametros();
-    Sistema::config_nido_abeja.imprimir_debug();
-    Persistence.saveHoneycombConfig();
+  if (save_honeycomb_from_ui_if_valid()) {
+    lv_scr_load_anim(UIScreens::screen_main, LV_SCR_LOAD_ANIM_FADE_IN, 300, 0,
+                     false);
   }
-
-  lv_scr_load_anim(UIScreens::screen_main, LV_SCR_LOAD_ANIM_FADE_IN, 300, 0,
-                   false);
 }
 
 void validate_and_wind_handler(lv_event_t *e) {
-  back_and_save_handler(e);
-  lv_scr_load_anim(UIScreens::screen_winding, LV_SCR_LOAD_ANIM_FADE_IN, 300, 0,
-                   false);
+  if (save_transformador_from_ui_if_valid()) {
+    lv_scr_load_anim(UIScreens::screen_winding, LV_SCR_LOAD_ANIM_FADE_IN, 300,
+                     0, false);
+  }
 }
 
 void validate_and_wind_honeycomb_handler(lv_event_t *e) {
-  back_and_save_honeycomb_handler(e);
-  lv_scr_load_anim(UIScreens::screen_winding, LV_SCR_LOAD_ANIM_FADE_IN, 300, 0,
-                   false);
+  if (save_honeycomb_from_ui_if_valid()) {
+    lv_scr_load_anim(UIScreens::screen_winding, LV_SCR_LOAD_ANIM_FADE_IN, 300,
+                     0, false);
+  }
 }
 
 // =========================================================================
