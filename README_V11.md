@@ -9,8 +9,8 @@ version estable v10.3.
 - Rama base: `v11-simulador`, creada desde `master`.
 - `master` compila correctamente con PlatformIO antes de iniciar esta rama.
 - El firmware v10.3 queda como referencia estable.
-- Todavia no existe `core/`.
-- Todavia no existe `simulator/`.
+- `core/` contiene la primera logica pura del modo transformador.
+- `simulator/` contiene el primer ejecutable de consola para PC.
 
 ## Que es `core/`
 
@@ -39,18 +39,16 @@ La generacion real de pulsos STEP/DIR seguira perteneciendo al firmware ESP32.
 
 ## Como ejecutar el simulador
 
-El simulador todavia no esta implementado.
-
-Cuando exista, debe incluir un comando simple para probarlo desde Windows:
+Comando simple desde Windows:
 
 ```powershell
 .\tools\run-simulator.bat
 ```
 
-Ese script debe encargarse de compilar y ejecutar el simulador minimo, para no
-depender de recordar todos los comandos manuales.
+Ese script compila y ejecuta el simulador minimo. Requiere que `cmake` este
+disponible en `PATH`.
 
-La ruta manual esperada sera algo parecido a:
+Ruta manual equivalente:
 
 ```powershell
 cd simulator
@@ -59,13 +57,16 @@ cmake --build build
 .\build\transformer_sim.exe
 ```
 
-Si se decide una opcion mas simple para la Fase 1, podria ejecutarse con un
-compilador C++ directamente. Este README se actualizara cuando el comando real
-quede definido.
+En generadores multi-configuracion, como Visual Studio, el ejecutable puede
+quedar en:
+
+```powershell
+.\build\Release\transformer_sim.exe
+```
 
 ## Que no se ha tocado
 
-En este punto no se ha modificado la logica funcional de v10.3.
+En esta fase no se ha modificado la logica funcional de v10.3.
 
 Archivos especialmente protegidos en la primera fase:
 
@@ -85,11 +86,11 @@ Archivos especialmente protegidos en la primera fase:
 
 ## Criterio de trabajo
 
-La Fase 1 debe ser aditiva: crear `core/` y `simulator/` sin conectar todavia el
+La Fase 1 es aditiva: crea `core/` y `simulator/` sin conectar todavia el
 firmware ESP32 a la nueva arquitectura.
 
 El objetivo inmediato no es cambiar como bobina la maquina, sino poder estudiar
 y probar la logica del modo transformador en PC.
 
-La Fase 1 debe incluir tambien `tools/run-simulator.bat` como entrada sencilla
-para compilar y ejecutar el simulador.
+La Fase 1 incluye tambien `tools/run-simulator.bat` como entrada sencilla para
+compilar y ejecutar el simulador.
