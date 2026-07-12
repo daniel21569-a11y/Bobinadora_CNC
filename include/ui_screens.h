@@ -13,6 +13,7 @@ namespace UIScreens {
     extern lv_obj_t *screen_config_honeycomb;
     extern lv_obj_t *screen_winding;
     extern lv_obj_t *screen_manual_control;
+    extern lv_obj_t *screen_settings;
     
     // Campos de configuración TRANSFORMADOR
     extern lv_obj_t *ta_diametro_alambre;
@@ -47,6 +48,7 @@ namespace UIScreens {
     void crear_pantalla_configuracion_honeycomb();
     void crear_pantalla_bobinado();
     void crear_pantalla_control_manual();
+    void crear_pantalla_ajustes();
     
     void init_all_screens();
 }

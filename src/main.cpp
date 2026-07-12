@@ -296,6 +296,7 @@ void ui_task(void *pvParameters) {
         Sistema::estado.brillo_backlight = 255; // Nivel máximo
 
       display_backlight(Sistema::estado.brillo_backlight);
+      Persistence.saveBrightness(Sistema::estado.brillo_backlight);
       Serial.printf("[Hardware] Botón SW1 presionado. Brillo: %d/255\n",
                     Sistema::estado.brillo_backlight);
       vTaskDelay(pdMS_TO_TICKS(50)); // Debounce
@@ -344,6 +345,10 @@ void setup() {
   Serial.println("[Display] ✓ OK\n");
 
   // Inicializar Touch - NO CRÍTICO
+  display_backlight(Sistema::estado.brillo_backlight);
+  Serial.printf("[Display] Brillo cargado: %u/255\n",
+                Sistema::estado.brillo_backlight);
+
   Serial.println("[3/7] Inicializando touch GT911...");
   // Rotación 0 para nueva placa con táctil invertido
   touch_available =

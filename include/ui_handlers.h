@@ -12,6 +12,7 @@ void btn_modo_handler(lv_event_t *e);
 void btn_comando_handler(lv_event_t *e);
 void btn_manual_handler(lv_event_t *e);
 void btn_manual_back_handler(lv_event_t *e);
+void btn_ajustes_handler(lv_event_t *e);
 
 // Handlers de configuración
 void back_and_save_handler(lv_event_t *e);

@@ -10,6 +10,7 @@ lv_obj_t *screen_config = nullptr;
 lv_obj_t *screen_config_honeycomb = nullptr;
 lv_obj_t *screen_winding = nullptr;
 lv_obj_t *screen_manual_control = nullptr;
+lv_obj_t *screen_settings = nullptr;
 
 // Campos de configuración TRANSFORMADOR
 lv_obj_t *ta_diametro_alambre = nullptr;
@@ -111,7 +112,7 @@ void crear_pantalla_principal() {
                         LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
   lv_obj_t *btn_manual = lv_btn_create(footer_cont);
-  lv_obj_set_size(btn_manual, 150, 45);
+  lv_obj_set_size(btn_manual, 130, 45);
   lv_obj_add_style(btn_manual, &UI::style_btn_warning, 0);
   lv_obj_set_user_data(btn_manual, (void *)"MANUAL");
   lv_obj_add_event_cb(btn_manual, UIHandlers::btn_navegacion_handler,
@@ -121,7 +122,7 @@ void crear_pantalla_principal() {
   lv_obj_center(label_manual);
 
   lv_obj_t *btn_home = lv_btn_create(footer_cont);
-  lv_obj_set_size(btn_home, 150, 45);
+  lv_obj_set_size(btn_home, 130, 45);
   lv_obj_add_style(btn_home, &UI::style_btn_warning, 0);
   lv_obj_set_user_data(btn_home, (void *)"HOME");
   lv_obj_add_event_cb(btn_home, UIHandlers::btn_comando_handler,
@@ -129,6 +130,16 @@ void crear_pantalla_principal() {
   lv_obj_t *label_home = lv_label_create(btn_home);
   lv_label_set_text(label_home, LV_SYMBOL_HOME " HOME");
   lv_obj_center(label_home);
+
+  lv_obj_t *btn_settings = lv_btn_create(footer_cont);
+  lv_obj_set_size(btn_settings, 130, 45);
+  lv_obj_add_style(btn_settings, &UI::style_btn_primary, 0);
+  lv_obj_set_user_data(btn_settings, (void *)"AJUSTES");
+  lv_obj_add_event_cb(btn_settings, UIHandlers::btn_navegacion_handler,
+                      LV_EVENT_CLICKED, NULL);
+  lv_obj_t *label_settings = lv_label_create(btn_settings);
+  lv_label_set_text(label_settings, LV_SYMBOL_SETTINGS " Ajustes");
+  lv_obj_center(label_settings);
 }
 
 void crear_pantalla_seleccion_modo() {
@@ -651,6 +662,47 @@ void crear_pantalla_control_manual() {
                       LV_EVENT_RELEASED, NULL);
 }
 
+void crear_pantalla_ajustes() {
+  screen_settings = lv_obj_create(NULL);
+  lv_obj_add_style(screen_settings, &UI::style_main_bg, 0);
+  lv_obj_set_layout(screen_settings, LV_LAYOUT_FLEX);
+  lv_obj_set_flex_flow(screen_settings, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_style_pad_all(screen_settings, 5, 0);
+  lv_obj_set_style_pad_row(screen_settings, 8, 0);
+  lv_obj_clear_flag(screen_settings, LV_OBJ_FLAG_SCROLLABLE);
+
+  UI::create_header(screen_settings, LV_SYMBOL_SETTINGS " AJUSTES",
+                    UIHandlers::btn_navegacion_handler);
+
+  lv_obj_t *card = UI::create_card(screen_settings);
+  lv_obj_set_height(card, LV_SIZE_CONTENT);
+  lv_obj_set_layout(card, LV_LAYOUT_FLEX);
+  lv_obj_set_flex_flow(card, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_style_pad_all(card, 12, 0);
+  lv_obj_set_style_pad_row(card, 10, 0);
+
+  lv_obj_t *title = lv_label_create(card);
+  lv_label_set_text(title, "Retroiluminacion");
+  lv_obj_add_style(title, &UI::style_header, 0);
+
+  lv_obj_t *row = lv_obj_create(card);
+  lv_obj_set_width(row, LV_PCT(100));
+  lv_obj_set_height(row, LV_SIZE_CONTENT);
+  lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(row, 0, 0);
+  lv_obj_set_layout(row, LV_LAYOUT_FLEX);
+  lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+  lv_obj_set_flex_align(row, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER,
+                        LV_FLEX_ALIGN_CENTER);
+
+  UI::create_button(row, "Bajo", "BRILLO_BAJO", &UI::style_btn_warning,
+                    UIHandlers::btn_ajustes_handler, 120, 45);
+  UI::create_button(row, "Medio", "BRILLO_MEDIO", &UI::style_btn_primary,
+                    UIHandlers::btn_ajustes_handler, 120, 45);
+  UI::create_button(row, "Alto", "BRILLO_ALTO", &UI::style_btn_success,
+                    UIHandlers::btn_ajustes_handler, 120, 45);
+}
+
 void init_all_screens() {
   crear_pantalla_principal();
   crear_pantalla_seleccion_modo();
@@ -658,5 +710,6 @@ void init_all_screens() {
   crear_pantalla_configuracion_honeycomb();
   crear_pantalla_bobinado();
   crear_pantalla_control_manual();
+  crear_pantalla_ajustes();
 }
 } // namespace UIScreens

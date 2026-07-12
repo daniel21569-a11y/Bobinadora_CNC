@@ -5,6 +5,8 @@
 #include "ui_screens.h"
 #include <Arduino.h>
 
+void display_backlight(uint8_t brightness);
+
 namespace UIHandlers {
 
 static bool homing_error_visible = false;
@@ -123,9 +125,33 @@ void btn_navegacion_handler(lv_event_t *e) {
   else if (strcmp(id, "MANUAL") == 0)
     lv_scr_load_anim(UIScreens::screen_manual_control, LV_SCR_LOAD_ANIM_FADE_IN,
                      300, 0, false);
+  else if (strcmp(id, "AJUSTES") == 0)
+    lv_scr_load_anim(UIScreens::screen_settings, LV_SCR_LOAD_ANIM_FADE_IN, 300,
+                     0, false);
   else if (strcmp(id, "PRINCIPAL") == 0)
     lv_scr_load_anim(UIScreens::screen_main, LV_SCR_LOAD_ANIM_FADE_IN, 300, 0,
                      false);
+}
+
+void btn_ajustes_handler(lv_event_t *e) {
+  lv_obj_t *target = (lv_obj_t *)lv_event_get_target(e);
+  const char *id = (const char *)lv_obj_get_user_data(target);
+
+  uint8_t brightness = Sistema::estado.brillo_backlight;
+  if (strcmp(id, "BRILLO_BAJO") == 0) {
+    brightness = 15;
+  } else if (strcmp(id, "BRILLO_MEDIO") == 0) {
+    brightness = 120;
+  } else if (strcmp(id, "BRILLO_ALTO") == 0) {
+    brightness = 255;
+  } else {
+    return;
+  }
+
+  Sistema::estado.brillo_backlight = brightness;
+  display_backlight(brightness);
+  Persistence.saveBrightness(brightness);
+  Serial.printf("[UI] Brillo ajustado desde Ajustes: %u/255\n", brightness);
 }
 
 void btn_modo_handler(lv_event_t *e) {

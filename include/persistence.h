@@ -128,6 +128,20 @@ public:
         preferences.end();
         return static_cast<ModoBobinado>(modo);
     }
+
+    void saveBrightness(uint8_t brightness) {
+        preferences.begin("system", false);
+        preferences.putUChar("brightness", brightness);
+        preferences.end();
+        Serial.printf("✓ Brillo guardado: %u/255\n", brightness);
+    }
+
+    uint8_t loadBrightness() {
+        preferences.begin("system", true);
+        uint8_t brightness = preferences.getUChar("brightness", 255);
+        preferences.end();
+        return brightness;
+    }
     
     // =========================================================================
     // CARGAR TODA LA CONFIGURACIÓN
@@ -138,6 +152,7 @@ public:
         
         // Cargar último modo
         Sistema::estado.modo = loadLastMode();
+        Sistema::estado.brillo_backlight = loadBrightness();
         
         // Cargar configuraciones
         loadTransformadorConfig();
@@ -151,6 +166,7 @@ public:
     // =========================================================================
     void saveAll() {
         saveLastMode(Sistema::estado.modo);
+        saveBrightness(Sistema::estado.brillo_backlight);
         saveTransformadorConfig();
         saveHoneycombConfig();
         Serial.println("✓ Toda la configuración guardada");

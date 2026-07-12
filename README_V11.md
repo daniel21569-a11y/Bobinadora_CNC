@@ -350,3 +350,23 @@ arranca normalmente y queda esperando a que el usuario pulse `HOME` manualmente.
 
 Los motores siguen deshabilitados inicialmente desde `init_hardware()`. El flujo
 de `HOME` manual mantiene el comportamiento seguro documentado arriba.
+
+## Ajustes de sistema
+
+Fase 1: se añade una pantalla `Ajustes` accesible desde la pantalla principal.
+
+La primera opcion disponible es el brillo de retroiluminacion:
+
+- Bajo: `15`
+- Medio: `120`
+- Alto: `255`
+
+El brillo se guarda en `Preferences` dentro del namespace `system` y se carga al
+arrancar. Tras `display_init()`, el firmware aplica el brillo guardado con
+`display_backlight()`.
+
+El boton fisico `SW1` mantiene su ciclo de brillo existente y ahora tambien
+guarda el nuevo valor en `Preferences`.
+
+No se implementa todavia actualizacion de firmware por SD/USB ni otros ajustes
+de sistema.
