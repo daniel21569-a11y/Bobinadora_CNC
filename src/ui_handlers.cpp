@@ -150,9 +150,10 @@ void btn_comando_handler(lv_event_t *e) {
         Sistema::estado.estado == EstadoBobinado::PAUSADO ||
         Sistema::estado.estado == EstadoBobinado::ERROR) {
       Serial.println(">>> COMANDO: HOME MANUAL <<<");
-      homing_ejes();
+      bool homing_ok = homing_ejes();
       if (UIScreens::label_estado) {
-        lv_label_set_text(UIScreens::label_estado, "HOME OK");
+        lv_label_set_text(UIScreens::label_estado,
+                          homing_ok ? "HOME OK" : "HOME ERROR");
       }
     }
   } else if (strcmp(id, "INICIAR") == 0 &&
@@ -501,8 +502,9 @@ void update_winding_screen() {
 }
 
 // Implementaciones stub de funciones de hardware
-__attribute__((weak)) void homing_ejes() {
+__attribute__((weak)) bool homing_ejes() {
   Serial.println("homing_ejes() llamada desde UI handler");
+  return false;
 }
 
 __attribute__((weak)) void move_motor_steps_safe(int step_pin, int dir_pin,

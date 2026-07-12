@@ -303,3 +303,20 @@ Si la validacion falla:
 
 Si la validacion pasa, el comportamiento esperado se mantiene: calcular
 parametros, guardar configuracion y navegar segun el boton usado.
+
+## Homing X seguro
+
+`UIHandlers::homing_ejes()` devuelve `true` solo si detecta `LIMIT_X` antes de
+`MAX_PASOS`.
+
+Si no se detecta el final de carrera:
+
+- se deshabilitan ambos motores
+- el estado pasa a `ERROR`
+- `movimiento_manual_activo` vuelve a `false`
+- `rpm_objetivo` queda en `0`
+- no se ejecuta el retroceso de homing
+- no se llama a `reset()`
+- la UI muestra `HOME ERROR` en lugar de `HOME OK`
+
+El bobinado normal y `motor_task_optimized.h` no se modifican en esta fase.

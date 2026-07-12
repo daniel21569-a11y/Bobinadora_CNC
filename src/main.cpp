@@ -77,7 +77,7 @@ void init_hardware() {
   Serial.println("[Hardware] ✓ Pines de motores configurados");
 }
 
-void UIHandlers::homing_ejes() {
+bool UIHandlers::homing_ejes() {
   Serial.println("\n>>> INICIANDO HOMING <<<");
   Sistema::estado.estado = EstadoBobinado::HOMING;
   Sistema::estado.movimiento_manual_activo = true;
@@ -89,11 +89,13 @@ void UIHandlers::homing_ejes() {
   digitalWrite(Hardware::Motor::DIR_X_PIN, LOW);
   int pasos = 0;
   const int MAX_PASOS = Hardware::Motor::PASOS_POR_MM_X * 500;
+  bool limite_detectado = false;
 
   while (pasos < MAX_PASOS) {
     bool limite = !digitalRead(Hardware::Motor::LIMIT_X_PIN);
     if (limite) {
-      Serial.println("Límite detectado!");
+      Serial.println("Limite detectado!");
+      limite_detectado = true;
       break;
     }
     digitalWrite(Hardware::Motor::STEP_X_PIN, HIGH);
@@ -101,6 +103,16 @@ void UIHandlers::homing_ejes() {
     digitalWrite(Hardware::Motor::STEP_X_PIN, LOW);
     delayMicroseconds(Hardware::Motor::HOMING_SPEED_DELAY);
     pasos++;
+  }
+
+  if (!limite_detectado) {
+    Serial.println("ERROR: Homing X sin detectar LIMIT_X");
+    digitalWrite(Hardware::Motor::ENABLE_X_PIN, HIGH);
+    digitalWrite(Hardware::Motor::ENABLE_Y_PIN, HIGH);
+    Sistema::estado.estado = EstadoBobinado::ERROR;
+    Sistema::estado.movimiento_manual_activo = false;
+    Sistema::estado.rpm_objetivo = 0.0f;
+    return false;
   }
 
   digitalWrite(Hardware::Motor::DIR_X_PIN, HIGH);
@@ -115,6 +127,7 @@ void UIHandlers::homing_ejes() {
   Sistema::estado.estado = EstadoBobinado::LISTO;
   Sistema::estado.movimiento_manual_activo = false;
   Serial.println(">>> HOMING COMPLETADO <<<\n");
+  return true;
 }
 
 void UIHandlers::move_motor_steps_safe(int step_pin, int dir_pin, int steps,

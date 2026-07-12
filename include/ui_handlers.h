@@ -27,7 +27,7 @@ void screen_winding_load_handler(lv_event_t *e);
 void update_winding_screen();
 
 // Función auxiliar para homing (declaración)
-void homing_ejes();
+bool homing_ejes();
 void move_motor_steps_safe(int step_pin, int dir_pin, int steps, int delay_us);
 } // namespace UIHandlers
 
