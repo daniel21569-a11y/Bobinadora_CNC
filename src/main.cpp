@@ -129,6 +129,7 @@ bool UIHandlers::homing_ejes() {
     Sistema::estado.estado = EstadoBobinado::ERROR;
     Sistema::estado.movimiento_manual_activo = false;
     Sistema::estado.rpm_objetivo = 0.0f;
+    UIHandlers::set_homing_error_visible(true);
     return false;
   }
 
@@ -147,6 +148,7 @@ bool UIHandlers::homing_ejes() {
   Sistema::estado.reset();
   Sistema::estado.estado = EstadoBobinado::LISTO;
   Sistema::estado.movimiento_manual_activo = false;
+  UIHandlers::set_homing_error_visible(false);
   Serial.println(">>> HOMING COMPLETADO <<<\n");
   return true;
 }
@@ -414,7 +416,15 @@ void setup() {
 
   // Homing inicial
   Serial.println("[7/7] Ejecutando homing inicial...");
-  UIHandlers::homing_ejes();
+  bool homing_inicial_ok = UIHandlers::homing_ejes();
+  if (!homing_inicial_ok && UIScreens::screen_winding) {
+    lv_scr_load(UIScreens::screen_winding);
+    if (UIScreens::label_estado) {
+      lv_label_set_text(UIScreens::label_estado, "HOME ERROR");
+      lv_obj_set_style_text_color(UIScreens::label_estado, UI::color_danger,
+                                  0);
+    }
+  }
 
   // Timer para actualizar pantalla de bobinado
   lv_timer_create(

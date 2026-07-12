@@ -7,6 +7,10 @@
 
 namespace UIHandlers {
 
+static bool homing_error_visible = false;
+
+void set_homing_error_visible(bool visible) { homing_error_visible = visible; }
+
 static void close_error_dialog(lv_event_t *e) {
   lv_obj_t *button = (lv_obj_t *)lv_event_get_target(e);
   lv_obj_t *dialog = lv_obj_get_parent(button);
@@ -154,6 +158,14 @@ void btn_comando_handler(lv_event_t *e) {
       if (UIScreens::label_estado) {
         lv_label_set_text(UIScreens::label_estado,
                           homing_ok ? "HOME OK" : "HOME ERROR");
+        if (!homing_ok) {
+          lv_obj_set_style_text_color(UIScreens::label_estado,
+                                      UI::color_danger, 0);
+        }
+      }
+      if (!homing_ok && UIScreens::screen_winding) {
+        lv_scr_load_anim(UIScreens::screen_winding, LV_SCR_LOAD_ANIM_FADE_IN,
+                         300, 0, false);
       }
     }
   } else if (strcmp(id, "INICIAR") == 0 &&
@@ -362,7 +374,7 @@ void update_winding_screen() {
       estado_color = UI::color_warning;
       break;
     case EstadoBobinado::ERROR:
-      estado_str = "ERROR";
+      estado_str = homing_error_visible ? "HOME ERROR" : "ERROR";
       estado_color = UI::color_danger;
       break;
     case EstadoBobinado::HOMING:

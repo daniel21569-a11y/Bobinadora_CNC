@@ -25,6 +25,7 @@ void screen_winding_load_handler(lv_event_t *e);
 
 // Actualización de UI
 void update_winding_screen();
+void set_homing_error_visible(bool visible);
 
 // Función auxiliar para homing (declaración)
 bool homing_ejes();

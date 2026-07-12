@@ -335,3 +335,7 @@ vTaskDelay(pdMS_TO_TICKS(1));
 Si falla por timeout o por alcanzar `MAX_PASOS`, se informa la causa por Serial
 y se mantiene el fallo limpio: motores deshabilitados, estado `ERROR`, sin
 retroceso, sin `reset()` y retorno `false`.
+
+Si el homing inicial falla durante el arranque, se carga la pantalla de bobinado
+para que el estado `HOME ERROR` quede visible. `update_winding_screen()` conserva
+ese texto mientras el error venga de homing.
