@@ -339,3 +339,6 @@ retroceso, sin `reset()` y retorno `false`.
 Si el homing inicial falla durante el arranque, se carga la pantalla de bobinado
 para que el estado `HOME ERROR` quede visible. `update_winding_screen()` conserva
 ese texto mientras el error venga de homing.
+
+Validado en placa: homing X falla limpiamente por timeout si no detecta
+`LIMIT_X`.
