@@ -48,6 +48,18 @@ Comando simple desde Windows:
 Ese script compila y ejecuta el simulador minimo. Requiere que `cmake` este
 disponible en `PATH`.
 
+CMake es la opcion principal porque mantiene separada la configuracion del
+compilador concreto. Si no hay CMake disponible, hay dos alternativas directas:
+
+```powershell
+.\tools\run-simulator-gpp.bat
+.\tools\run-simulator-msvc.bat
+```
+
+`run-simulator-gpp.bat` requiere `g++` en `PATH`. `run-simulator-msvc.bat`
+requiere ejecutar desde una Developer Command Prompt de Visual Studio, donde
+`cl.exe` este disponible.
+
 Ruta manual equivalente:
 
 ```powershell
