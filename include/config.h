@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <math.h>
+#include "../core/include/winding/transformer_core.h"
 
 // =========================================================================
 // CONFIGURACIÓN DE HARDWARE
@@ -116,43 +117,20 @@ struct ConfigTransformador {
 
   // Métodos
   void calcular_parametros() {
-    // Calcular vueltas por capa
-    if (diametro_alambre_mm > 0.0f) {
-      vueltas_por_capa = static_cast<uint32_t>(
-          floor(longitud_bobinado_mm / diametro_alambre_mm));
-    } else {
-      vueltas_por_capa = 0;
-    }
+    const winding::TransformerConfig core_config{
+        diametro_alambre_mm, longitud_bobinado_mm, vueltas_total,
+        velocidad_rpm, detener_en_capas};
+    const winding::MechanicalConfig mechanics{
+        Hardware::Motor::PASOS_POR_MM_X, Hardware::Motor::PASOS_POR_VUELTA_Y,
+        Hardware::Motor::MIN_RPM, Hardware::Motor::MAX_RPM};
+    const winding::TransformerDerived derived =
+        winding::calculate_transformer(core_config, mechanics);
 
-    // Calcular ratio de pasos X por cada paso Y
-    if (Hardware::Motor::PASOS_POR_VUELTA_Y > 0) {
-      float pasos_X_por_vuelta =
-          diametro_alambre_mm * Hardware::Motor::PASOS_POR_MM_X;
-      step_ratio_X_per_Y =
-          pasos_X_por_vuelta /
-          static_cast<float>(Hardware::Motor::PASOS_POR_VUELTA_Y);
-    } else {
-      step_ratio_X_per_Y = 0.0f;
-    }
-
-    // Calcular límite de pasos en X
-    limite_pasos_X = static_cast<int32_t>(
-        roundf(longitud_bobinado_mm * Hardware::Motor::PASOS_POR_MM_X));
-
-    // Calcular capas estimadas
-    if (vueltas_por_capa > 0) {
-      capas_estimadas = static_cast<uint32_t>(
-          ceil(static_cast<float>(vueltas_total) / vueltas_por_capa));
-      if (capas_estimadas == 0 && vueltas_total > 0) {
-        capas_estimadas = 1;
-      }
-    } else {
-      capas_estimadas = 0;
-    }
-
-    // Calcular grosor final estimado
-    grosor_bobinado_mm =
-        static_cast<float>(capas_estimadas) * diametro_alambre_mm;
+    vueltas_por_capa = derived.vueltas_por_capa;
+    capas_estimadas = derived.capas_estimadas;
+    grosor_bobinado_mm = derived.grosor_bobinado_mm;
+    step_ratio_X_per_Y = derived.step_ratio_x_per_y;
+    limite_pasos_X = derived.limite_pasos_x;
   }
 
   bool validar() const {

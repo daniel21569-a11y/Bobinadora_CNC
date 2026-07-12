@@ -1,43 +1,6 @@
 #include "winding/transformer_core.h"
 
-#include <cmath>
-
 namespace winding {
-
-TransformerDerived calculate_transformer(const TransformerConfig &config,
-                                         const MechanicalConfig &mechanics) {
-  TransformerDerived derived;
-
-  if (config.diametro_alambre_mm > 0.0f) {
-    derived.vueltas_por_capa = static_cast<std::uint32_t>(
-        std::floor(config.longitud_bobinado_mm / config.diametro_alambre_mm));
-  }
-
-  if (mechanics.pasos_por_vuelta_y > 0) {
-    const float pasos_x_por_vuelta =
-        config.diametro_alambre_mm * mechanics.pasos_por_mm_x;
-    derived.step_ratio_x_per_y =
-        pasos_x_por_vuelta /
-        static_cast<float>(mechanics.pasos_por_vuelta_y);
-  }
-
-  derived.limite_pasos_x = static_cast<std::int32_t>(
-      std::round(config.longitud_bobinado_mm * mechanics.pasos_por_mm_x));
-
-  if (derived.vueltas_por_capa > 0) {
-    derived.capas_estimadas = static_cast<std::uint32_t>(std::ceil(
-        static_cast<float>(config.vueltas_total) / derived.vueltas_por_capa));
-    if (derived.capas_estimadas == 0 && config.vueltas_total > 0) {
-      derived.capas_estimadas = 1;
-    }
-  }
-
-  derived.grosor_bobinado_mm =
-      static_cast<float>(derived.capas_estimadas) *
-      config.diametro_alambre_mm;
-
-  return derived;
-}
 
 ValidationResult validate_transformer(const TransformerConfig &config,
                                       const MechanicalConfig &mechanics) {

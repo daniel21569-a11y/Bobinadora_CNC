@@ -132,3 +132,27 @@ compilar y ejecutar el simulador.
   en placa.
 - Integrar `core/` en ESP32 por pasos pequenos, sin tocar UI ni pines hasta que
   sea necesario y aprobado.
+
+## Fase 2 minima
+
+`ConfigTransformador::calcular_parametros()` mantiene su API publica, pero ahora
+delega el calculo de parametros derivados en `winding::calculate_transformer()`.
+
+Esta integracion solo reutiliza el calculo puro del core:
+
+- no conecta `motor_task_optimized.h` al core
+- no cambia la generacion de pulsos STEP/DIR
+- no cambia pines
+- no toca la UI
+- no convierte `TransformerEngine` a header-only
+
+Implementacion:
+
+- solo `winding::calculate_transformer()` queda inline/header-only para que el
+  firmware PlatformIO pueda usarlo sin cambiar `platformio.ini`
+- `TransformerEngine` sigue implementado en `core/src/transformer_core.cpp`
+- `ConfigTransformador` conserva sus campos publicos actuales y copia los
+  resultados derivados del core a esos mismos campos
+
+El objetivo es comprobar que el firmware puede empezar a consumir `core/` sin
+cambiar comportamiento visible.
