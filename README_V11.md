@@ -157,6 +157,37 @@ Implementacion:
 El objetivo es comprobar que el firmware puede empezar a consumir `core/` sin
 cambiar comportamiento visible.
 
+## Fase 3 minima
+
+`ConfigNidoAbeja::calcular_parametros()` mantiene su API publica, pero ahora
+delega el calculo de parametros derivados en `winding::calculate_honeycomb()`.
+
+Esta integracion solo reutiliza el calculo puro del core:
+
+- no conecta la logica honeycomb de `motor_task_optimized.h` al core
+- no cambia la generacion de pulsos STEP/DIR
+- no cambia pines
+- no toca la UI
+- no cambia `src/main.cpp`
+- no cambia `platformio.ini`
+
+Detalle de equivalencia:
+
+| Campo actual | Origen en core |
+| --- | --- |
+| `desfase_grados` | `HoneycombDerived::desfase_grados` |
+| `factor_desfase` | `HoneycombDerived::factor_desfase` |
+| `vueltas_por_capa` | `HoneycombDerived::vueltas_por_capa` |
+| `capas_estimadas` | `HoneycombDerived::capas_estimadas` |
+| `grosor_estimado` | `HoneycombDerived::grosor_estimado` |
+| `step_ratio_X_per_Y` | `HoneycombDerived::step_ratio_x_per_y` |
+| `pasos_X_recorrido_completo` | `HoneycombDerived::pasos_x_recorrido_completo` |
+| `pasos_Y_por_ciclo` | `HoneycombDerived::pasos_y_por_ciclo` |
+
+Se conserva el comportamiento anterior en el caso especial donde
+`factor_desfase < 0.1`: el calculo ajusta `factor_desfase` a `0.1` y actualiza
+`desfase_grados` a `(factor_desfase - 1.0) * 360.0`.
+
 ### Equivalencia numerica revisada
 
 Se comparo el calculo anterior de `ConfigTransformador::calcular_parametros()`

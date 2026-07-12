@@ -203,51 +203,23 @@ struct ConfigNidoAbeja {
 
   // Métodos
   void calcular_parametros() {
-    // Convertir grados a factor de desfase
-    factor_desfase = 1.0f + (desfase_grados / 360.0f);
+    const winding::HoneycombConfig core_config{
+        diametro_hilo, diametro_carrete, ancho_carrete, desfase_grados,
+        num_vueltas, velocidad_rpm};
+    const winding::MechanicalConfig mechanics{
+        Hardware::Motor::PASOS_POR_MM_X, Hardware::Motor::PASOS_POR_VUELTA_Y,
+        Hardware::Motor::MIN_RPM, Hardware::Motor::MAX_RPM};
+    const winding::HoneycombDerived derived =
+        winding::calculate_honeycomb(core_config, mechanics);
 
-    // Validar factor mínimo
-    if (factor_desfase < 0.1f) {
-      factor_desfase = 0.1f;
-      desfase_grados = (factor_desfase - 1.0f) * 360.0f;
-    }
-
-    // Calcular pasos totales del recorrido X (ida + vuelta)
-    pasos_X_recorrido_completo = static_cast<int32_t>(
-        ancho_carrete * Hardware::Motor::PASOS_POR_MM_X * 2);
-
-    // Calcular pasos de Y para un ciclo completo
-    pasos_Y_por_ciclo = static_cast<int32_t>(
-        Hardware::Motor::PASOS_POR_VUELTA_Y * factor_desfase);
-
-    // Calcular ratio X/Y
-    if (pasos_Y_por_ciclo > 0) {
-      step_ratio_X_per_Y =
-          static_cast<float>(pasos_X_recorrido_completo) / pasos_Y_por_ciclo;
-    } else {
-      step_ratio_X_per_Y = 0.0f;
-    }
-
-    // Calcular vueltas por capa
-    if (fabs(desfase_grados) > 0.1f) {
-      vueltas_por_capa = static_cast<uint32_t>(360.0f / fabs(desfase_grados));
-    } else {
-      vueltas_por_capa = num_vueltas;
-    }
-
-    // Calcular capas estimadas
-    if (vueltas_por_capa > 0) {
-      capas_estimadas = static_cast<uint32_t>(
-          ceil(static_cast<float>(num_vueltas) / vueltas_por_capa));
-    } else {
-      capas_estimadas = 1;
-    }
-
-    if (capas_estimadas < 1)
-      capas_estimadas = 1;
-
-    // Calcular grosor estimado
-    grosor_estimado = static_cast<float>(capas_estimadas) * diametro_hilo;
+    desfase_grados = derived.desfase_grados;
+    factor_desfase = derived.factor_desfase;
+    vueltas_por_capa = derived.vueltas_por_capa;
+    capas_estimadas = derived.capas_estimadas;
+    grosor_estimado = derived.grosor_estimado;
+    step_ratio_X_per_Y = derived.step_ratio_x_per_y;
+    pasos_X_recorrido_completo = derived.pasos_x_recorrido_completo;
+    pasos_Y_por_ciclo = derived.pasos_y_por_ciclo;
   }
 
   bool validar() const {
