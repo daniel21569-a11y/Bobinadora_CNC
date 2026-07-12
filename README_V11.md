@@ -342,3 +342,11 @@ ese texto mientras el error venga de homing.
 
 Validado en placa: homing X falla limpiamente por timeout si no detecta
 `LIMIT_X`.
+
+### Arranque sin homing automatico
+
+`setup()` ya no ejecuta `UIHandlers::homing_ejes()` durante el arranque. La UI
+arranca normalmente y queda esperando a que el usuario pulse `HOME` manualmente.
+
+Los motores siguen deshabilitados inicialmente desde `init_hardware()`. El flujo
+de `HOME` manual mantiene el comportamiento seguro documentado arriba.

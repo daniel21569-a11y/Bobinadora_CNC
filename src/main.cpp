@@ -414,17 +414,7 @@ void setup() {
     Serial.println("[UI] ✓ Pantalla principal cargada\n");
   }
 
-  // Homing inicial
-  Serial.println("[7/7] Ejecutando homing inicial...");
-  bool homing_inicial_ok = UIHandlers::homing_ejes();
-  if (!homing_inicial_ok && UIScreens::screen_winding) {
-    lv_scr_load(UIScreens::screen_winding);
-    if (UIScreens::label_estado) {
-      lv_label_set_text(UIScreens::label_estado, "HOME ERROR");
-      lv_obj_set_style_text_color(UIScreens::label_estado, UI::color_danger,
-                                  0);
-    }
-  }
+  Serial.println("[7/7] Homing inicial omitido: esperando HOME manual");
 
   // Timer para actualizar pantalla de bobinado
   lv_timer_create(
