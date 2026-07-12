@@ -4,6 +4,10 @@ Este archivo acompana la rama experimental `v11-simulador`.
 La intencion es dejar trazabilidad de las decisiones antes de mover codigo de la
 version estable v10.3.
 
+La rama se identifica en pantalla como `Bobinadora CNC v10.4`. Esta version
+experimental agrupa mejoras de seguridad y ajustes manteniendo `master` como
+referencia estable v10.3.
+
 Nota de direccion: el simulador en PC queda como opcion secundaria porque este
 equipo no tiene espacio para instalar un toolchain C++ de escritorio. A partir
 de ahora la prioridad es que el firmware PlatformIO siga compilando y que

@@ -1,7 +1,7 @@
 // =========================================================================
 // BOBINADORA CNC CON LVGL 9.x - VERSIÓN PLATFORMIO JC4827W543
-// VERSIÓN: 10.3 - Estable y Optimizada
-// NOTAS DE VERSIÓN 10.3:
+// VERSI�N: 10.4 - Ajustes y Seguridad
+// NOTAS DE VERSI�N 10.4:
 // - Corregido error en visualización de vueltas totales (siempre salía 0)
 // - Corregido título de modo en pantalla de bobinado
 // - Limpieza de código y eliminación de secciones obsoletas
@@ -319,7 +319,8 @@ void setup() {
 
   Serial.println("\n\n");
   Serial.println("========================================");
-  Serial.println("   BOBINADORA CNC v10.3");
+  Serial.print("   ");
+  Serial.println(FirmwareInfo::DISPLAY_NAME);
   Serial.println("   PlatformIO + LVGL 9.x + JC4827W543");
   Serial.println("========================================");
   Serial.println();

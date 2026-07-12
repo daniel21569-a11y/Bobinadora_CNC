@@ -5,6 +5,13 @@
 #include <math.h>
 #include "../core/include/winding/transformer_core.h"
 
+namespace FirmwareInfo {
+constexpr const char *NAME = "Bobinadora CNC";
+constexpr const char *VERSION = "10.4";
+constexpr const char *CODENAME = "Ajustes y Seguridad";
+constexpr const char *DISPLAY_NAME = "BOBINADORA CNC v10.4";
+} // namespace FirmwareInfo
+
 // =========================================================================
 // CONFIGURACIÓN DE HARDWARE
 // =========================================================================

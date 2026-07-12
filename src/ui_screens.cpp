@@ -53,7 +53,8 @@ void crear_pantalla_principal() {
   lv_obj_add_style(header_cont, &UI::style_card, 0);
   lv_obj_set_style_pad_ver(header_cont, 5, 0);
   lv_obj_t *header_label = lv_label_create(header_cont);
-  lv_label_set_text(header_label, LV_SYMBOL_SETTINGS " BOBINADORA CNC v10.3");
+  lv_label_set_text_fmt(header_label, LV_SYMBOL_SETTINGS " %s",
+                        FirmwareInfo::DISPLAY_NAME);
   lv_obj_add_style(header_label, &UI::style_header, 0);
   lv_obj_center(header_label);
 
