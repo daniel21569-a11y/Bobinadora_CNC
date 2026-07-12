@@ -260,3 +260,22 @@ Notas de mapeo:
 
 Esta fase no cambia comportamiento visible porque ningun archivo del firmware
 incluye todavia el adaptador.
+
+## Reglas de verificacion
+
+- En esta maquina, usar PlatformIO en modo secuencial para evitar builds
+  paralelas colgadas:
+
+```powershell
+& 'C:\Users\Daniel\.platformio\penv\Scripts\python.exe' -m platformio run -j 1
+```
+
+- No tocar `include/motor_task_optimized.h` sin plan previo, diff revisado y
+  una estrategia clara para comparar comportamiento.
+- No conectar `include/winding_core_adapters.h` al flujo real del firmware sin
+  pruebas previas.
+- Mantener protegidos UI y pines:
+  - `src/ui_*`
+  - `lib/PINS_JC4827W543.h`
+  - `platformio.ini`
+  - `src/main.cpp`
