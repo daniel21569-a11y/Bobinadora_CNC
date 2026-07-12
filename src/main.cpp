@@ -89,9 +89,18 @@ bool UIHandlers::homing_ejes() {
   digitalWrite(Hardware::Motor::DIR_X_PIN, LOW);
   int pasos = 0;
   const int MAX_PASOS = Hardware::Motor::PASOS_POR_MM_X * 500;
+  const uint32_t HOMING_TIMEOUT_MS = 15000;
+  const int HOMING_YIELD_EVERY_STEPS = 50;
+  const unsigned long homing_inicio_ms = millis();
   bool limite_detectado = false;
+  bool timeout_detectado = false;
 
   while (pasos < MAX_PASOS) {
+    if ((millis() - homing_inicio_ms) >= HOMING_TIMEOUT_MS) {
+      timeout_detectado = true;
+      break;
+    }
+
     bool limite = !digitalRead(Hardware::Motor::LIMIT_X_PIN);
     if (limite) {
       Serial.println("Limite detectado!");
@@ -103,10 +112,18 @@ bool UIHandlers::homing_ejes() {
     digitalWrite(Hardware::Motor::STEP_X_PIN, LOW);
     delayMicroseconds(Hardware::Motor::HOMING_SPEED_DELAY);
     pasos++;
+
+    if ((pasos % HOMING_YIELD_EVERY_STEPS) == 0) {
+      vTaskDelay(pdMS_TO_TICKS(1));
+    }
   }
 
   if (!limite_detectado) {
-    Serial.println("ERROR: Homing X sin detectar LIMIT_X");
+    if (timeout_detectado) {
+      Serial.println("ERROR: Homing X timeout sin detectar LIMIT_X");
+    } else {
+      Serial.println("ERROR: Homing X alcanzo MAX_PASOS sin detectar LIMIT_X");
+    }
     digitalWrite(Hardware::Motor::ENABLE_X_PIN, HIGH);
     digitalWrite(Hardware::Motor::ENABLE_Y_PIN, HIGH);
     Sistema::estado.estado = EstadoBobinado::ERROR;
@@ -121,6 +138,10 @@ bool UIHandlers::homing_ejes() {
     delayMicroseconds(Hardware::Motor::STEP_PULSE_US);
     digitalWrite(Hardware::Motor::STEP_X_PIN, LOW);
     delayMicroseconds(Hardware::Motor::HOMING_SPEED_DELAY);
+
+    if (((i + 1) % HOMING_YIELD_EVERY_STEPS) == 0) {
+      vTaskDelay(pdMS_TO_TICKS(1));
+    }
   }
 
   Sistema::estado.reset();

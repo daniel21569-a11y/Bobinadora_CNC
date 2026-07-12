@@ -320,3 +320,18 @@ Si no se detecta el final de carrera:
 - la UI muestra `HOME ERROR` en lugar de `HOME OK`
 
 El bobinado normal y `motor_task_optimized.h` no se modifican en esta fase.
+
+### Antiwatchdog en homing X
+
+El homing X usa un timeout local de `15000 ms` ademas de `MAX_PASOS`.
+
+Durante la busqueda de `LIMIT_X` y durante el retroceso, el bucle cede tiempo al
+scheduler cada 50 pasos con:
+
+```cpp
+vTaskDelay(pdMS_TO_TICKS(1));
+```
+
+Si falla por timeout o por alcanzar `MAX_PASOS`, se informa la causa por Serial
+y se mantiene el fallo limpio: motores deshabilitados, estado `ERROR`, sin
+retroceso, sin `reset()` y retorno `false`.
