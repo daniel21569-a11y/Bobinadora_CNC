@@ -7,7 +7,8 @@ version estable v10.3.
 Nota de direccion: el simulador en PC queda como opcion secundaria porque este
 equipo no tiene espacio para instalar un toolchain C++ de escritorio. A partir
 de ahora la prioridad es que el firmware PlatformIO siga compilando y que
-`core/` pueda integrarse poco a poco en ESP32.
+`core/` pueda integrarse poco a poco en ESP32. La validacion actual se hara con
+PlatformIO y pruebas en placa.
 
 ## Estado inicial
 
@@ -15,8 +16,8 @@ de ahora la prioridad es que el firmware PlatformIO siga compilando y que
 - `master` compila correctamente con PlatformIO antes de iniciar esta rama.
 - El firmware v10.3 queda como referencia estable.
 - `core/` contiene la primera logica pura del modo transformador.
-- `simulator/` contiene un ejecutable de consola opcional para PC, no requerido
-  para continuar.
+- `simulator/` contiene un ejecutable de consola opcional para PC. Se conserva
+  como trabajo futuro, pero no es necesario para continuar.
 
 ## Que es `core/`
 
@@ -44,8 +45,8 @@ La generacion real de pulsos STEP/DIR seguira perteneciendo al firmware ESP32.
 
 ## Como ejecutar el simulador
 
-El simulador de PC es opcional. No se instalara CMake, MSVC, MinGW, clang ni
-ningun toolchain pesado solo para ejecutarlo en este equipo.
+El simulador de PC es opcional y queda como futuro. No se instalara CMake, MSVC,
+MinGW, clang ni ningun toolchain pesado solo para ejecutarlo en este equipo.
 
 Comando simple desde Windows:
 
@@ -84,9 +85,9 @@ quedar en:
 .\build\Release\transformer_sim.exe
 ```
 
-Si no hay compilador C++ de escritorio disponible, la ruta de validacion pasa a
-ser PlatformIO: primero mantener el firmware compilando y despues integrar
-`core/` gradualmente en el target ESP32.
+La ruta de validacion actual pasa por PlatformIO y por pruebas en placa: primero
+mantener el firmware compilando y despues integrar `core/` gradualmente en el
+target ESP32.
 
 ## Que no se ha tocado
 
@@ -124,8 +125,10 @@ compilar y ejecutar el simulador.
 - Mantener `master` como firmware estable.
 - Mantener `v11-simulador` como rama experimental.
 - No eliminar `core/`.
+- No borrar `simulator/`; queda como opcion futura.
 - No instalar toolchains ni dependencias pesadas para simulacion PC.
 - Tratar `simulator/` y `tools/run-simulator*.bat` como ayudas opcionales.
-- Priorizar que `pio run` compile el firmware.
+- Priorizar que `pio run` compile el firmware y que los cambios se puedan probar
+  en placa.
 - Integrar `core/` en ESP32 por pasos pequenos, sin tocar UI ni pines hasta que
   sea necesario y aprobado.
