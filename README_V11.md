@@ -1,8 +1,13 @@
-# V11 Simulador - Diario tecnico
+# V11 Core - Diario tecnico
 
 Este archivo acompana la rama experimental `v11-simulador`.
 La intencion es dejar trazabilidad de las decisiones antes de mover codigo de la
 version estable v10.3.
+
+Nota de direccion: el simulador en PC queda como opcion secundaria porque este
+equipo no tiene espacio para instalar un toolchain C++ de escritorio. A partir
+de ahora la prioridad es que el firmware PlatformIO siga compilando y que
+`core/` pueda integrarse poco a poco en ESP32.
 
 ## Estado inicial
 
@@ -10,23 +15,23 @@ version estable v10.3.
 - `master` compila correctamente con PlatformIO antes de iniciar esta rama.
 - El firmware v10.3 queda como referencia estable.
 - `core/` contiene la primera logica pura del modo transformador.
-- `simulator/` contiene el primer ejecutable de consola para PC.
+- `simulator/` contiene un ejecutable de consola opcional para PC, no requerido
+  para continuar.
 
 ## Que es `core/`
 
-`core/` sera la carpeta para la logica pura de bobinado.
+`core/` es la carpeta para la logica pura de bobinado.
 
-Debe poder compilar en PC sin depender de:
+Debe mantenerse independiente de:
 
 - Arduino
-- ESP32
 - LVGL
 - FreeRTOS
 - `Serial`
 - pines fisicos
 - `digitalWrite`, `micros`, `delayMicroseconds`
 
-En la primera fase, `core/` deberia contener solo la logica minima del modo
+La primera version de `core/` contiene solo la logica minima del modo
 transformador:
 
 - parametros de entrada del bobinado
@@ -38,6 +43,9 @@ transformador:
 La generacion real de pulsos STEP/DIR seguira perteneciendo al firmware ESP32.
 
 ## Como ejecutar el simulador
+
+El simulador de PC es opcional. No se instalara CMake, MSVC, MinGW, clang ni
+ningun toolchain pesado solo para ejecutarlo en este equipo.
 
 Comando simple desde Windows:
 
@@ -76,6 +84,10 @@ quedar en:
 .\build\Release\transformer_sim.exe
 ```
 
+Si no hay compilador C++ de escritorio disponible, la ruta de validacion pasa a
+ser PlatformIO: primero mantener el firmware compilando y despues integrar
+`core/` gradualmente en el target ESP32.
+
 ## Que no se ha tocado
 
 En esta fase no se ha modificado la logica funcional de v10.3.
@@ -101,8 +113,19 @@ Archivos especialmente protegidos en la primera fase:
 La Fase 1 es aditiva: crea `core/` y `simulator/` sin conectar todavia el
 firmware ESP32 a la nueva arquitectura.
 
-El objetivo inmediato no es cambiar como bobina la maquina, sino poder estudiar
-y probar la logica del modo transformador en PC.
+El objetivo inmediato no es cambiar como bobina la maquina, sino aislar la
+logica pura para poder reutilizarla desde el firmware.
 
 La Fase 1 incluye tambien `tools/run-simulator.bat` como entrada sencilla para
 compilar y ejecutar el simulador.
+
+## Prioridad a partir de ahora
+
+- Mantener `master` como firmware estable.
+- Mantener `v11-simulador` como rama experimental.
+- No eliminar `core/`.
+- No instalar toolchains ni dependencias pesadas para simulacion PC.
+- Tratar `simulator/` y `tools/run-simulator*.bat` como ayudas opcionales.
+- Priorizar que `pio run` compile el firmware.
+- Integrar `core/` en ESP32 por pasos pequenos, sin tocar UI ni pines hasta que
+  sea necesario y aprobado.
