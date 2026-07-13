@@ -392,5 +392,17 @@ cambiar el brillo desde los botones Bajo/Medio/Alto.
 Esta fase no cambia la logica de bobinado, generacion de pulsos, homing, pines,
 perfiles ni persistencia.
 
+### Reglas para cambios UI en placa
+
+Tras revertir una regresion fisica causada por un refactor de `Ajustes` a
+subpantallas, quedan estas reglas para v10.4:
+
+- Una build `SUCCESS` no valida comportamiento fisico.
+- Todo cambio de UI debe probarse en placa.
+- Las pantallas nuevas deben anadirse de una en una.
+- Evitar refrescar labels u objetos LVGL si no esta claro que existen.
+- No hacer refactors amplios de navegacion LVGL sin prueba fisica intermedia.
+- Mantener `Ajustes` en diseno conservador hasta estabilizar.
+
 No se implementa todavia actualizacion de firmware por SD/USB ni otros ajustes
 de sistema.
