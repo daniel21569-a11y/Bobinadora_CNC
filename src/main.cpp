@@ -284,22 +284,10 @@ void ui_task(void *pvParameters) {
   static bool ultimo_estado_sw1 = HIGH;
 
   while (1) {
-    // Control de retroiluminación con botón físico SW1
+    // SW1 reservado: el brillo se controla desde Ajustes > Retroiluminacion.
     bool estado_actual_sw1 = digitalRead(Hardware::Touch::SW1_PIN);
     if (estado_actual_sw1 == LOW && ultimo_estado_sw1 == HIGH) {
-      // Ciclo de brillo: 255 -> 15 -> 120 -> 255
-      if (Sistema::estado.brillo_backlight > 200)
-        Sistema::estado.brillo_backlight = 15; // Muy bajo, ideal para fotos
-      else if (Sistema::estado.brillo_backlight < 50)
-        Sistema::estado.brillo_backlight = 120; // Nivel medio-suave
-      else
-        Sistema::estado.brillo_backlight = 255; // Nivel máximo
-
-      display_backlight(Sistema::estado.brillo_backlight);
-      Persistence.saveBrightness(Sistema::estado.brillo_backlight);
-      Serial.printf("[Hardware] Botón SW1 presionado. Brillo: %d/255\n",
-                    Sistema::estado.brillo_backlight);
-      vTaskDelay(pdMS_TO_TICKS(50)); // Debounce
+      vTaskDelay(pdMS_TO_TICKS(50)); // Debounce sin accion asignada
     }
     ultimo_estado_sw1 = estado_actual_sw1;
 

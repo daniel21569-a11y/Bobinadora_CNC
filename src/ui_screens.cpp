@@ -2,6 +2,8 @@
 #include "persistence.h"
 #include "ui_handlers.h"
 
+void display_backlight(uint8_t brightness);
+
 namespace UIScreens {
 // Definición de pantallas
 lv_obj_t *screen_main = nullptr;
@@ -48,6 +50,8 @@ static lv_obj_t *label_info_persistent_mode = nullptr;
 static lv_obj_t *label_info_status = nullptr;
 static lv_obj_t *label_machine_status_summary = nullptr;
 static lv_obj_t *label_hardware_diagnostic = nullptr;
+static lv_obj_t *label_brightness_submenu_value = nullptr;
+static lv_obj_t *slider_brightness_submenu = nullptr;
 
 static const char *mode_to_text(ModoBobinado mode) {
   return mode == ModoBobinado::TRANSFORMADOR ? "Transformador"
@@ -116,6 +120,37 @@ static void update_system_info_labels() {
 
 static void refresh_system_info_event_cb(lv_event_t *e) {
   update_system_info_labels();
+}
+
+static void update_brightness_submenu_label() {
+  if (label_brightness_submenu_value) {
+    lv_label_set_text_fmt(label_brightness_submenu_value, "Brillo: %u",
+                          Sistema::estado.brillo_backlight);
+  }
+}
+
+static void sync_brightness_submenu_controls() {
+  if (slider_brightness_submenu) {
+    lv_slider_set_value(slider_brightness_submenu,
+                        Sistema::estado.brillo_backlight, LV_ANIM_OFF);
+  }
+  update_brightness_submenu_label();
+}
+
+static void brightness_submenu_screen_event_cb(lv_event_t *e) {
+  sync_brightness_submenu_controls();
+}
+
+static void brightness_submenu_slider_changed_cb(lv_event_t *e) {
+  lv_obj_t *slider = (lv_obj_t *)lv_event_get_target(e);
+  uint8_t brightness = (uint8_t)lv_slider_get_value(slider);
+  Sistema::estado.brillo_backlight = brightness;
+  display_backlight(brightness);
+  update_brightness_submenu_label();
+}
+
+static void brightness_submenu_slider_released_cb(lv_event_t *e) {
+  Persistence.saveBrightness(Sistema::estado.brillo_backlight);
 }
 
 void crear_pantalla_principal() {
@@ -773,32 +808,6 @@ void crear_pantalla_ajustes() {
                     &UI::style_btn_primary,
                     UIHandlers::btn_navegacion_handler, 260, 38);
 
-  lv_obj_t *row = lv_obj_create(card);
-  lv_obj_set_width(row, LV_PCT(100));
-  lv_obj_set_height(row, LV_SIZE_CONTENT);
-  lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
-  lv_obj_set_style_border_width(row, 0, 0);
-  lv_obj_set_layout(row, LV_LAYOUT_FLEX);
-  lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
-  lv_obj_set_flex_align(row, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER,
-                        LV_FLEX_ALIGN_CENTER);
-
-  lv_obj_t *btn_bajo =
-      UI::create_button(row, "Bajo", "BRILLO_BAJO", &UI::style_btn_warning,
-                        UIHandlers::btn_ajustes_handler, 120, 45);
-  lv_obj_add_event_cb(btn_bajo, refresh_system_info_event_cb, LV_EVENT_CLICKED,
-                      NULL);
-  lv_obj_t *btn_medio =
-      UI::create_button(row, "Medio", "BRILLO_MEDIO", &UI::style_btn_primary,
-                        UIHandlers::btn_ajustes_handler, 120, 45);
-  lv_obj_add_event_cb(btn_medio, refresh_system_info_event_cb, LV_EVENT_CLICKED,
-                      NULL);
-  lv_obj_t *btn_alto =
-      UI::create_button(row, "Alto", "BRILLO_ALTO", &UI::style_btn_success,
-                        UIHandlers::btn_ajustes_handler, 120, 45);
-  lv_obj_add_event_cb(btn_alto, refresh_system_info_event_cb, LV_EVENT_CLICKED,
-                      NULL);
-
   lv_obj_t *info_card = UI::create_card(screen_settings);
   lv_obj_set_flex_grow(info_card, 1);
   lv_obj_set_layout(info_card, LV_LAYOUT_FLEX);
@@ -888,6 +897,9 @@ void crear_pantalla_ajustes_brillo() {
   }
 
   screen_settings_brightness = lv_obj_create(NULL);
+  lv_obj_add_event_cb(screen_settings_brightness,
+                      brightness_submenu_screen_event_cb,
+                      LV_EVENT_SCREEN_LOADED, NULL);
   lv_obj_add_style(screen_settings_brightness, &UI::style_main_bg, 0);
   lv_obj_set_layout(screen_settings_brightness, LV_LAYOUT_FLEX);
   lv_obj_set_flex_flow(screen_settings_brightness, LV_FLEX_FLOW_COLUMN);
@@ -901,6 +913,22 @@ void crear_pantalla_ajustes_brillo() {
   lv_label_set_text(title, "Retroiluminacion");
   lv_obj_add_style(title, &UI::style_header, 0);
 
+  label_brightness_submenu_value = lv_label_create(screen_settings_brightness);
+  lv_obj_set_style_text_color(label_brightness_submenu_value, UI::color_text,
+                              0);
+  lv_obj_set_style_text_font(label_brightness_submenu_value,
+                             &lv_font_montserrat_16, 0);
+
+  slider_brightness_submenu = lv_slider_create(screen_settings_brightness);
+  lv_obj_set_width(slider_brightness_submenu, 260);
+  lv_slider_set_range(slider_brightness_submenu, 15, 255);
+  lv_obj_add_event_cb(slider_brightness_submenu,
+                      brightness_submenu_slider_changed_cb,
+                      LV_EVENT_VALUE_CHANGED, NULL);
+  lv_obj_add_event_cb(slider_brightness_submenu,
+                      brightness_submenu_slider_released_cb, LV_EVENT_RELEASED,
+                      NULL);
+
   lv_obj_t *btn_back = lv_btn_create(screen_settings_brightness);
   lv_obj_set_size(btn_back, 140, 45);
   lv_obj_add_style(btn_back, &UI::style_btn_primary, 0);
@@ -911,6 +939,8 @@ void crear_pantalla_ajustes_brillo() {
   lv_obj_t *label_back = lv_label_create(btn_back);
   lv_label_set_text(label_back, LV_SYMBOL_LEFT " Volver");
   lv_obj_center(label_back);
+
+  sync_brightness_submenu_controls();
 }
 
 void init_all_screens() {
