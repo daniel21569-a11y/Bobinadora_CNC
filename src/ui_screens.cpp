@@ -11,8 +11,6 @@ lv_obj_t *screen_config_honeycomb = nullptr;
 lv_obj_t *screen_winding = nullptr;
 lv_obj_t *screen_manual_control = nullptr;
 lv_obj_t *screen_settings = nullptr;
-lv_obj_t *screen_settings_brightness = nullptr;
-lv_obj_t *screen_settings_system_info = nullptr;
 
 // Campos de configuración TRANSFORMADOR
 lv_obj_t *ta_diametro_alambre = nullptr;
@@ -47,7 +45,6 @@ static lv_obj_t *label_info_brightness = nullptr;
 static lv_obj_t *label_info_mode = nullptr;
 static lv_obj_t *label_info_persistent_mode = nullptr;
 static lv_obj_t *label_info_status = nullptr;
-static lv_obj_t *label_brightness_current = nullptr;
 
 static const char *mode_to_text(ModoBobinado mode) {
   return mode == ModoBobinado::TRANSFORMADOR ? "Transformador"
@@ -100,51 +97,6 @@ static void update_system_info_labels() {
 
 static void refresh_system_info_event_cb(lv_event_t *e) {
   update_system_info_labels();
-}
-
-static void update_brightness_label() {
-  if (label_brightness_current) {
-    lv_label_set_text_fmt(label_brightness_current, "%u/255",
-                          Sistema::estado.brillo_backlight);
-  }
-}
-
-static void refresh_brightness_event_cb(lv_event_t *e) {
-  update_brightness_label();
-}
-
-static void create_settings_submenu_header(lv_obj_t *parent,
-                                           const char *title) {
-  lv_obj_t *header = lv_obj_create(parent);
-  lv_obj_set_width(header, LV_PCT(100));
-  lv_obj_set_height(header, LV_SIZE_CONTENT);
-  lv_obj_add_style(header, &UI::style_card, 0);
-  lv_obj_set_style_pad_all(header, 8, 0);
-  lv_obj_set_layout(header, LV_LAYOUT_FLEX);
-  lv_obj_set_flex_flow(header, LV_FLEX_FLOW_ROW);
-  lv_obj_set_flex_align(header, LV_FLEX_ALIGN_SPACE_BETWEEN,
-                        LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-
-  lv_obj_t *btn_back = lv_btn_create(header);
-  lv_obj_set_size(btn_back, 45, 45);
-  lv_obj_add_style(btn_back, &UI::style_btn_primary, 0);
-  lv_obj_set_user_data(btn_back, (void *)"AJUSTES");
-  lv_obj_add_event_cb(btn_back, UIHandlers::btn_navegacion_handler,
-                      LV_EVENT_CLICKED, NULL);
-  lv_obj_t *label_back = lv_label_create(btn_back);
-  lv_label_set_text(label_back, LV_SYMBOL_LEFT);
-  lv_obj_center(label_back);
-
-  lv_obj_t *header_label = lv_label_create(header);
-  lv_label_set_text(header_label, title);
-  lv_obj_add_style(header_label, &UI::style_header, 0);
-  lv_obj_set_flex_grow(header_label, 1);
-  lv_obj_set_style_text_align(header_label, LV_TEXT_ALIGN_CENTER, 0);
-
-  lv_obj_t *spacer = lv_obj_create(header);
-  lv_obj_set_size(spacer, 45, 45);
-  lv_obj_set_style_bg_opa(spacer, LV_OPA_TRANSP, 0);
-  lv_obj_set_style_border_width(spacer, 0, 0);
 }
 
 void crear_pantalla_principal() {
@@ -775,66 +727,28 @@ void crear_pantalla_control_manual() {
 void crear_pantalla_ajustes() {
   screen_settings = lv_obj_create(NULL);
   lv_obj_add_style(screen_settings, &UI::style_main_bg, 0);
+  lv_obj_add_event_cb(screen_settings, refresh_system_info_event_cb,
+                      LV_EVENT_SCREEN_LOADED, NULL);
   lv_obj_set_layout(screen_settings, LV_LAYOUT_FLEX);
   lv_obj_set_flex_flow(screen_settings, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_style_pad_all(screen_settings, 5, 0);
-  lv_obj_set_style_pad_row(screen_settings, 8, 0);
+  lv_obj_set_style_pad_row(screen_settings, 6, 0);
   lv_obj_clear_flag(screen_settings, LV_OBJ_FLAG_SCROLLABLE);
 
   UI::create_header(screen_settings, LV_SYMBOL_SETTINGS " AJUSTES",
                     UIHandlers::btn_navegacion_handler);
 
-  lv_obj_t *menu_cont = lv_obj_create(screen_settings);
-  lv_obj_set_width(menu_cont, LV_PCT(100));
-  lv_obj_set_flex_grow(menu_cont, 1);
-  lv_obj_set_style_bg_opa(menu_cont, LV_OPA_TRANSP, 0);
-  lv_obj_set_style_border_width(menu_cont, 0, 0);
-  lv_obj_set_layout(menu_cont, LV_LAYOUT_FLEX);
-  lv_obj_set_flex_flow(menu_cont, LV_FLEX_FLOW_COLUMN);
-  lv_obj_set_flex_align(menu_cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER,
-                        LV_FLEX_ALIGN_CENTER);
-  lv_obj_set_style_pad_all(menu_cont, 6, 0);
-  lv_obj_set_style_pad_row(menu_cont, 18, 0);
-
-  UI::create_button(menu_cont, "Retroiluminacion", "AJUSTES_BRILLO",
-                    &UI::style_btn_primary,
-                    UIHandlers::btn_navegacion_handler, 340, 70);
-  UI::create_button(menu_cont, LV_SYMBOL_FILE " Informacion del sistema",
-                    "AJUSTES_INFO", &UI::style_btn_primary,
-                    UIHandlers::btn_navegacion_handler, 340, 70);
-}
-
-void crear_pantalla_ajustes_brillo() {
-  screen_settings_brightness = lv_obj_create(NULL);
-  lv_obj_add_style(screen_settings_brightness, &UI::style_main_bg, 0);
-  lv_obj_add_event_cb(screen_settings_brightness, refresh_brightness_event_cb,
-                      LV_EVENT_SCREEN_LOADED, NULL);
-  lv_obj_set_layout(screen_settings_brightness, LV_LAYOUT_FLEX);
-  lv_obj_set_flex_flow(screen_settings_brightness, LV_FLEX_FLOW_COLUMN);
-  lv_obj_set_style_pad_all(screen_settings_brightness, 5, 0);
-  lv_obj_set_style_pad_row(screen_settings_brightness, 8, 0);
-  lv_obj_clear_flag(screen_settings_brightness, LV_OBJ_FLAG_SCROLLABLE);
-
-  create_settings_submenu_header(screen_settings_brightness,
-                                 LV_SYMBOL_SETTINGS " RETROILUMINACION");
-
-  lv_obj_t *card = UI::create_card(screen_settings_brightness);
-  lv_obj_set_flex_grow(card, 1);
+  lv_obj_t *card = UI::create_card(screen_settings);
+  lv_obj_set_height(card, LV_SIZE_CONTENT);
   lv_obj_set_layout(card, LV_LAYOUT_FLEX);
   lv_obj_set_flex_flow(card, LV_FLEX_FLOW_COLUMN);
-  lv_obj_set_flex_align(card, LV_FLEX_ALIGN_SPACE_EVENLY,
-                        LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-  lv_obj_set_style_pad_all(card, 12, 0);
-  lv_obj_set_style_pad_row(card, 12, 0);
+  lv_obj_set_style_pad_all(card, 8, 0);
+  lv_obj_set_style_pad_row(card, 7, 0);
 
   lv_obj_t *title = lv_label_create(card);
-  lv_label_set_text(title, "Brillo actual");
+  lv_label_set_text(title, "Retroiluminacion");
   lv_obj_add_style(title, &UI::style_header, 0);
-
-  label_brightness_current = lv_label_create(card);
-  lv_obj_add_style(label_brightness_current, &UI::style_label_value, 0);
-  lv_obj_set_style_text_font(label_brightness_current, &lv_font_montserrat_28,
-                             0);
+  lv_obj_set_style_text_font(title, &lv_font_montserrat_16, 0);
 
   lv_obj_t *row = lv_obj_create(card);
   lv_obj_set_width(row, LV_PCT(100));
@@ -849,45 +763,30 @@ void crear_pantalla_ajustes_brillo() {
   lv_obj_t *btn_bajo =
       UI::create_button(row, "Bajo", "BRILLO_BAJO", &UI::style_btn_warning,
                         UIHandlers::btn_ajustes_handler, 120, 45);
+  lv_obj_add_event_cb(btn_bajo, refresh_system_info_event_cb, LV_EVENT_CLICKED,
+                      NULL);
   lv_obj_t *btn_medio =
       UI::create_button(row, "Medio", "BRILLO_MEDIO", &UI::style_btn_primary,
                         UIHandlers::btn_ajustes_handler, 120, 45);
+  lv_obj_add_event_cb(btn_medio, refresh_system_info_event_cb, LV_EVENT_CLICKED,
+                      NULL);
   lv_obj_t *btn_alto =
       UI::create_button(row, "Alto", "BRILLO_ALTO", &UI::style_btn_success,
                         UIHandlers::btn_ajustes_handler, 120, 45);
-  lv_obj_add_event_cb(btn_bajo, refresh_brightness_event_cb, LV_EVENT_CLICKED,
+  lv_obj_add_event_cb(btn_alto, refresh_system_info_event_cb, LV_EVENT_CLICKED,
                       NULL);
-  lv_obj_add_event_cb(btn_medio, refresh_brightness_event_cb, LV_EVENT_CLICKED,
-                      NULL);
-  lv_obj_add_event_cb(btn_alto, refresh_brightness_event_cb, LV_EVENT_CLICKED,
-                      NULL);
-  update_brightness_label();
-}
 
-void crear_pantalla_info_sistema() {
-  screen_settings_system_info = lv_obj_create(NULL);
-  lv_obj_add_style(screen_settings_system_info, &UI::style_main_bg, 0);
-  lv_obj_add_event_cb(screen_settings_system_info, refresh_system_info_event_cb,
-                      LV_EVENT_SCREEN_LOADED, NULL);
-  lv_obj_set_layout(screen_settings_system_info, LV_LAYOUT_FLEX);
-  lv_obj_set_flex_flow(screen_settings_system_info, LV_FLEX_FLOW_COLUMN);
-  lv_obj_set_style_pad_all(screen_settings_system_info, 5, 0);
-  lv_obj_set_style_pad_row(screen_settings_system_info, 8, 0);
-  lv_obj_clear_flag(screen_settings_system_info, LV_OBJ_FLAG_SCROLLABLE);
-
-  create_settings_submenu_header(screen_settings_system_info,
-                                 LV_SYMBOL_FILE " SISTEMA");
-
-  lv_obj_t *info_card = UI::create_card(screen_settings_system_info);
+  lv_obj_t *info_card = UI::create_card(screen_settings);
   lv_obj_set_flex_grow(info_card, 1);
   lv_obj_set_layout(info_card, LV_LAYOUT_FLEX);
   lv_obj_set_flex_flow(info_card, LV_FLEX_FLOW_COLUMN);
-  lv_obj_set_style_pad_all(info_card, 12, 0);
-  lv_obj_set_style_pad_row(info_card, 8, 0);
+  lv_obj_set_style_pad_all(info_card, 8, 0);
+  lv_obj_set_style_pad_row(info_card, 4, 0);
 
   lv_obj_t *info_title = lv_label_create(info_card);
   lv_label_set_text(info_title, LV_SYMBOL_FILE " Informacion del sistema");
   lv_obj_add_style(info_title, &UI::style_header, 0);
+  lv_obj_set_style_text_font(info_title, &lv_font_montserrat_16, 0);
 
   lv_obj_t *info_grid = lv_obj_create(info_card);
   lv_obj_set_width(info_grid, LV_PCT(100));
@@ -895,8 +794,8 @@ void crear_pantalla_info_sistema() {
   lv_obj_set_style_bg_opa(info_grid, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(info_grid, 0, 0);
   lv_obj_set_style_pad_all(info_grid, 0, 0);
-  lv_obj_set_style_pad_row(info_grid, 7, 0);
-  lv_obj_set_style_pad_column(info_grid, 12, 0);
+  lv_obj_set_style_pad_row(info_grid, 2, 0);
+  lv_obj_set_style_pad_column(info_grid, 8, 0);
   lv_obj_set_layout(info_grid, LV_LAYOUT_GRID);
 
   static lv_coord_t info_cols[] = {LV_GRID_FR(2), LV_GRID_FR(3),
@@ -911,13 +810,14 @@ void crear_pantalla_info_sistema() {
     lv_obj_t *label = lv_label_create(info_grid);
     lv_label_set_text(label, label_text);
     lv_obj_add_style(label, &UI::style_text_secondary, 0);
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_12, 0);
     lv_obj_set_grid_cell(label, LV_GRID_ALIGN_START, 0, 1,
                          LV_GRID_ALIGN_CENTER, row_index, 1);
 
     lv_obj_t *value = lv_label_create(info_grid);
     lv_label_set_text(value, value_text);
     lv_obj_set_style_text_color(value, UI::color_text, 0);
-    lv_obj_set_style_text_font(value, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_font(value, &lv_font_montserrat_12, 0);
     lv_label_set_long_mode(value, LV_LABEL_LONG_DOT);
     lv_obj_set_width(value, LV_PCT(100));
     lv_obj_set_grid_cell(value, LV_GRID_ALIGN_STRETCH, 1, 1,
@@ -943,7 +843,5 @@ void init_all_screens() {
   crear_pantalla_bobinado();
   crear_pantalla_control_manual();
   crear_pantalla_ajustes();
-  crear_pantalla_ajustes_brillo();
-  crear_pantalla_info_sistema();
 }
 } // namespace UIScreens

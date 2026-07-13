@@ -128,12 +128,6 @@ void btn_navegacion_handler(lv_event_t *e) {
   else if (strcmp(id, "AJUSTES") == 0)
     lv_scr_load_anim(UIScreens::screen_settings, LV_SCR_LOAD_ANIM_FADE_IN, 300,
                      0, false);
-  else if (strcmp(id, "AJUSTES_BRILLO") == 0)
-    lv_scr_load_anim(UIScreens::screen_settings_brightness,
-                     LV_SCR_LOAD_ANIM_FADE_IN, 300, 0, false);
-  else if (strcmp(id, "AJUSTES_INFO") == 0)
-    lv_scr_load_anim(UIScreens::screen_settings_system_info,
-                     LV_SCR_LOAD_ANIM_FADE_IN, 300, 0, false);
   else if (strcmp(id, "PRINCIPAL") == 0)
     lv_scr_load_anim(UIScreens::screen_main, LV_SCR_LOAD_ANIM_FADE_IN, 300, 0,
                      false);
