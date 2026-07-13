@@ -429,6 +429,12 @@ La pantalla contiene solo un texto y un boton `Volver` a `Ajustes`. No usa
 timers, no refresca labels dinamicos y no toca brillo, estado de maquina,
 diagnostico hardware, motores, homing ni logica de bobinado.
 
+Validado en placa: el hardware y LVGL pueden abrir pantallas adicionales si se
+usa lazy creation. El patron aceptado para submenus de `Ajustes` es inicializar
+el puntero a `nullptr`, no crear la pantalla en `init_all_screens()`, crearla
+solo al pulsar el boton correspondiente y anadir submenus uno a uno con prueba
+fisica. Cada submenu debe tener boton volver local a `Ajustes`.
+
 ### Reglas para cambios UI en placa
 
 Tras revertir una regresion fisica causada por un refactor de `Ajustes` a

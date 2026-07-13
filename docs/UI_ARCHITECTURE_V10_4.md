@@ -57,6 +57,10 @@ Cadenas `user_data` usadas para navegacion:
 - `AJUSTES` -> `screen_settings`
 - `PRINCIPAL` -> `screen_main`
 
+Las pantallas de prueba o submenus validados bajo demanda no deben crearse en
+`init_all_screens()`. Su puntero debe inicializarse a `nullptr` y la pantalla se
+debe crear solo al pulsar el boton correspondiente.
+
 ## Header comun
 
 `UI::create_header()` crea un header con titulo, boton atras opcional y boton de
@@ -147,18 +151,24 @@ pantalla y despues de pulsar Bajo, Medio o Alto.
 
 ## Leccion aprendida
 
-No crear submenus de `Ajustes` como pantallas LVGL reales sin analisis profundo.
-Para futuras secciones de ajustes, preferir contenedores internos dentro de
-`screen_settings`.
+Una prueba fisica posterior valido que el hardware y LVGL si pueden abrir
+pantallas adicionales cuando se crean bajo demanda. La regresion no demuestra
+que toda pantalla adicional sea insegura; el patron peligroso es ampliar de
+golpe la navegacion o crear submenus durante el arranque sin prueba fisica
+intermedia.
 
 ## Patron recomendado para futuros ajustes
 
-- Mantener `screen_settings` como unica pantalla real de Ajustes.
-- Crear `settings_index_view`, `settings_brightness_view`,
-  `settings_status_view`, etc. como contenedores internos.
-- Cambiar de vista ocultando y mostrando contenedores con flags LVGL.
-- No usar `lv_scr_load_anim()` para navegacion interna de `Ajustes`.
-- Anadir una vista cada vez y probar en placa antes de continuar.
+- Para submenus reales de `Ajustes`, usar lazy creation:
+  - declarar el puntero global de pantalla e inicializarlo a `nullptr`
+  - no llamar a su funcion de creacion desde `init_all_screens()`
+  - crear la pantalla solo cuando el usuario pulse el boton del submenu
+  - si el puntero ya existe, reutilizar la pantalla
+- Cada submenu debe tener un boton volver local hacia `AJUSTES`.
+- No usar `UI::create_header()` para submenus de `Ajustes` si se necesita volver
+  a `AJUSTES`, porque el header comun vuelve a `PRINCIPAL`.
+- Anadir submenus uno a uno y probar fisicamente cada fase antes de continuar.
+- Evitar timers y refrescos dinamicos en el primer paso de cada submenu.
 
 ## Checklist obligatorio antes de tocar UI
 
