@@ -402,6 +402,19 @@ capas completadas, RPM actual/objetivo y si el bobinado esta completado.
 
 No se crean pantallas nuevas, submenus ni navegacion nueva.
 
+### Diagnostico hardware en Ajustes
+
+Se anade una seccion de solo lectura `Diagnostico hardware` dentro de la
+pantalla `Ajustes` existente.
+
+La seccion lee `Hardware::Motor::LIMIT_X_PIN` con el mismo criterio que
+`homing_ejes()`: `digitalRead()` en bajo significa final de carrera X pulsado.
+
+Solo se muestra `Final carrera X: LIBRE / PULSADO`. No existe diagnostico Y
+porque el eje Y es el enrollador del carrete y no tiene final de carrera.
+
+No se mueven motores, no se llama a homing y no se cambian estados del sistema.
+
 ### Reglas para cambios UI en placa
 
 Tras revertir una regresion fisica causada por un refactor de `Ajustes` a
