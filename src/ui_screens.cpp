@@ -14,6 +14,7 @@ lv_obj_t *screen_winding = nullptr;
 lv_obj_t *screen_manual_control = nullptr;
 lv_obj_t *screen_settings = nullptr;
 lv_obj_t *screen_settings_brightness = nullptr;
+lv_obj_t *screen_settings_info = nullptr;
 
 // Campos de configuración TRANSFORMADOR
 lv_obj_t *ta_diametro_alambre = nullptr;
@@ -46,7 +47,6 @@ static lv_obj_t *label_info_codename = nullptr;
 static lv_obj_t *label_info_version = nullptr;
 static lv_obj_t *label_info_brightness = nullptr;
 static lv_obj_t *label_info_mode = nullptr;
-static lv_obj_t *label_info_persistent_mode = nullptr;
 static lv_obj_t *label_info_status = nullptr;
 static lv_obj_t *label_machine_status_summary = nullptr;
 static lv_obj_t *label_hardware_diagnostic = nullptr;
@@ -92,10 +92,6 @@ static void update_system_info_labels() {
   }
   if (label_info_mode) {
     lv_label_set_text(label_info_mode, mode_to_text(Sistema::estado.modo));
-  }
-  if (label_info_persistent_mode) {
-    lv_label_set_text(label_info_persistent_mode,
-                      mode_to_text(Sistema::estado.modo));
   }
   if (label_info_status) {
     lv_label_set_text(label_info_status, status_to_text(Sistema::estado.estado));
@@ -151,6 +147,10 @@ static void brightness_submenu_slider_changed_cb(lv_event_t *e) {
 
 static void brightness_submenu_slider_released_cb(lv_event_t *e) {
   Persistence.saveBrightness(Sistema::estado.brillo_backlight);
+}
+
+static void settings_info_screen_event_cb(lv_event_t *e) {
+  update_system_info_labels();
 }
 
 void crear_pantalla_principal() {
@@ -807,6 +807,9 @@ void crear_pantalla_ajustes() {
   UI::create_button(card, "Abrir retroiluminacion", "AJUSTES_BRILLO",
                     &UI::style_btn_primary,
                     UIHandlers::btn_navegacion_handler, 260, 38);
+  UI::create_button(card, "Informacion del sistema", "AJUSTES_INFO",
+                    &UI::style_btn_primary,
+                    UIHandlers::btn_navegacion_handler, 260, 38);
 
   lv_obj_t *info_card = UI::create_card(screen_settings);
   lv_obj_set_flex_grow(info_card, 1);
@@ -814,56 +817,6 @@ void crear_pantalla_ajustes() {
   lv_obj_set_flex_flow(info_card, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_style_pad_all(info_card, 8, 0);
   lv_obj_set_style_pad_row(info_card, 4, 0);
-
-  lv_obj_t *info_title = lv_label_create(info_card);
-  lv_label_set_text(info_title, LV_SYMBOL_FILE " Informacion del sistema");
-  lv_obj_add_style(info_title, &UI::style_header, 0);
-  lv_obj_set_style_text_font(info_title, &lv_font_montserrat_16, 0);
-
-  lv_obj_t *info_grid = lv_obj_create(info_card);
-  lv_obj_set_width(info_grid, LV_PCT(100));
-  lv_obj_set_flex_grow(info_grid, 1);
-  lv_obj_set_style_bg_opa(info_grid, LV_OPA_TRANSP, 0);
-  lv_obj_set_style_border_width(info_grid, 0, 0);
-  lv_obj_set_style_pad_all(info_grid, 0, 0);
-  lv_obj_set_style_pad_row(info_grid, 2, 0);
-  lv_obj_set_style_pad_column(info_grid, 8, 0);
-  lv_obj_set_layout(info_grid, LV_LAYOUT_GRID);
-
-  static lv_coord_t info_cols[] = {LV_GRID_FR(2), LV_GRID_FR(3),
-                                   LV_GRID_TEMPLATE_LAST};
-  static lv_coord_t info_rows[] = {
-      LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT,
-      LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST};
-  lv_obj_set_grid_dsc_array(info_grid, info_cols, info_rows);
-
-  auto create_info_row = [&](int row_index, const char *label_text,
-                             const char *value_text) -> lv_obj_t * {
-    lv_obj_t *label = lv_label_create(info_grid);
-    lv_label_set_text(label, label_text);
-    lv_obj_add_style(label, &UI::style_text_secondary, 0);
-    lv_obj_set_style_text_font(label, &lv_font_montserrat_12, 0);
-    lv_obj_set_grid_cell(label, LV_GRID_ALIGN_START, 0, 1,
-                         LV_GRID_ALIGN_CENTER, row_index, 1);
-
-    lv_obj_t *value = lv_label_create(info_grid);
-    lv_label_set_text(value, value_text);
-    lv_obj_set_style_text_color(value, UI::color_text, 0);
-    lv_obj_set_style_text_font(value, &lv_font_montserrat_12, 0);
-    lv_label_set_long_mode(value, LV_LABEL_LONG_DOT);
-    lv_obj_set_width(value, LV_PCT(100));
-    lv_obj_set_grid_cell(value, LV_GRID_ALIGN_STRETCH, 1, 1,
-                         LV_GRID_ALIGN_CENTER, row_index, 1);
-    return value;
-  };
-
-  label_info_display_name = create_info_row(0, "Firmware", "");
-  label_info_codename = create_info_row(1, "Codename", "");
-  label_info_version = create_info_row(2, "Version", "");
-  label_info_brightness = create_info_row(3, "Brillo actual", "");
-  label_info_mode = create_info_row(4, "Modo actual", "");
-  label_info_persistent_mode = create_info_row(5, "Modo cargado", "");
-  label_info_status = create_info_row(6, "Estado actual", "");
 
   lv_obj_t *machine_title = lv_label_create(info_card);
   lv_label_set_text(machine_title, "Estado de la maquina");
@@ -941,6 +894,85 @@ void crear_pantalla_ajustes_brillo() {
   lv_obj_center(label_back);
 
   sync_brightness_submenu_controls();
+}
+
+void crear_pantalla_ajustes_info() {
+  if (screen_settings_info) {
+    update_system_info_labels();
+    return;
+  }
+
+  screen_settings_info = lv_obj_create(NULL);
+  lv_obj_add_event_cb(screen_settings_info, settings_info_screen_event_cb,
+                      LV_EVENT_SCREEN_LOADED, NULL);
+  lv_obj_add_style(screen_settings_info, &UI::style_main_bg, 0);
+  lv_obj_set_layout(screen_settings_info, LV_LAYOUT_FLEX);
+  lv_obj_set_flex_flow(screen_settings_info, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_flex_align(screen_settings_info, LV_FLEX_ALIGN_START,
+                        LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_set_style_pad_all(screen_settings_info, 8, 0);
+  lv_obj_set_style_pad_row(screen_settings_info, 10, 0);
+  lv_obj_clear_flag(screen_settings_info, LV_OBJ_FLAG_SCROLLABLE);
+
+  lv_obj_t *title = lv_label_create(screen_settings_info);
+  lv_label_set_text(title, "Informacion del sistema");
+  lv_obj_add_style(title, &UI::style_header, 0);
+  lv_obj_set_style_text_font(title, &lv_font_montserrat_16, 0);
+
+  lv_obj_t *info_grid = lv_obj_create(screen_settings_info);
+  lv_obj_set_width(info_grid, LV_PCT(100));
+  lv_obj_set_style_bg_opa(info_grid, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(info_grid, 0, 0);
+  lv_obj_set_style_pad_all(info_grid, 4, 0);
+  lv_obj_set_style_pad_row(info_grid, 6, 0);
+  lv_obj_set_style_pad_column(info_grid, 8, 0);
+  lv_obj_set_layout(info_grid, LV_LAYOUT_GRID);
+
+  static lv_coord_t info_cols[] = {LV_GRID_FR(2), LV_GRID_FR(3),
+                                   LV_GRID_TEMPLATE_LAST};
+  static lv_coord_t info_rows[] = {
+      LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT,
+      LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST};
+  lv_obj_set_grid_dsc_array(info_grid, info_cols, info_rows);
+
+  auto create_info_row = [&](int row_index,
+                             const char *label_text) -> lv_obj_t * {
+    lv_obj_t *label = lv_label_create(info_grid);
+    lv_label_set_text(label, label_text);
+    lv_obj_add_style(label, &UI::style_text_secondary, 0);
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_12, 0);
+    lv_obj_set_grid_cell(label, LV_GRID_ALIGN_START, 0, 1,
+                         LV_GRID_ALIGN_CENTER, row_index, 1);
+
+    lv_obj_t *value = lv_label_create(info_grid);
+    lv_obj_set_style_text_color(value, UI::color_text, 0);
+    lv_obj_set_style_text_font(value, &lv_font_montserrat_12, 0);
+    lv_label_set_long_mode(value, LV_LABEL_LONG_DOT);
+    lv_obj_set_width(value, LV_PCT(100));
+    lv_obj_set_grid_cell(value, LV_GRID_ALIGN_STRETCH, 1, 1,
+                         LV_GRID_ALIGN_CENTER, row_index, 1);
+    return value;
+  };
+
+  label_info_display_name = create_info_row(0, "Firmware");
+  label_info_codename = create_info_row(1, "Codename");
+  label_info_version = create_info_row(2, "Version");
+  label_info_brightness = create_info_row(3, "Brillo actual");
+  label_info_mode = create_info_row(4, "Modo actual");
+  label_info_status = create_info_row(5, "Estado actual");
+
+  lv_obj_t *btn_back = lv_btn_create(screen_settings_info);
+  lv_obj_set_size(btn_back, 140, 45);
+  lv_obj_add_style(btn_back, &UI::style_btn_primary, 0);
+  lv_obj_set_user_data(btn_back, (void *)"AJUSTES");
+  lv_obj_add_event_cb(btn_back, UIHandlers::btn_navegacion_handler,
+                      LV_EVENT_CLICKED, NULL);
+
+  lv_obj_t *label_back = lv_label_create(btn_back);
+  lv_label_set_text(label_back, LV_SYMBOL_LEFT " Volver");
+  lv_obj_center(label_back);
+
+  update_system_info_labels();
 }
 
 void init_all_screens() {
