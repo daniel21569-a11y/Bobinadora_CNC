@@ -415,19 +415,15 @@ porque el eje Y es el enrollador del carrete y no tiene final de carrera.
 
 No se mueven motores, no se llama a homing y no se cambian estados del sistema.
 
-### Prueba de pantalla LVGL bajo demanda
+### Validacion de pantalla LVGL bajo demanda
 
-Se anade una prueba controlada de arquitectura UI para distinguir si las
-regresiones vienen de crear pantallas durante `init_all_screens()` o de crear y
+Se realizo una prueba controlada de arquitectura UI para distinguir si las
+regresiones venian de crear pantallas durante `init_all_screens()` o de crear y
 cargar una pantalla nueva en general.
 
-La pantalla `Prueba pantalla` se crea solo bajo demanda desde `Ajustes`, al
-pulsar el boton correspondiente. No se crea durante el arranque ni se registra
-en `init_all_screens()`.
-
-La pantalla contiene solo un texto y un boton `Volver` a `Ajustes`. No usa
-timers, no refresca labels dinamicos y no toca brillo, estado de maquina,
-diagnostico hardware, motores, homing ni logica de bobinado.
+La pantalla de prueba se creo solo bajo demanda desde `Ajustes`, no durante el
+arranque, y valido fisicamente el patron de lazy creation. Tras cumplir su
+funcion de diagnostico, la prueba se retiro para no introducir ruido en la UI.
 
 Validado en placa: el hardware y LVGL pueden abrir pantallas adicionales si se
 usa lazy creation. El patron aceptado para submenus de `Ajustes` es inicializar
@@ -441,9 +437,9 @@ Se anade el primer submenu real de `Ajustes` usando el patron validado de lazy
 creation. `Retroiluminacion` se crea solo al pulsar `Abrir retroiluminacion` y
 no se registra en `init_all_screens()`.
 
-La pantalla muestra brillo actual, botones Bajo/Medio/Alto y un boton local
-`Volver` a `Ajustes`. Los controles de brillo existentes dentro de `Ajustes` se
-mantienen durante esta fase.
+Durante el diagnostico por reduccion, la subpantalla se mantiene minima: texto
+`Retroiluminacion` y boton local `Volver` a `Ajustes`. Los controles de brillo
+existentes dentro de `Ajustes` se mantienen durante esta fase.
 
 ### Reglas para cambios UI en placa
 
