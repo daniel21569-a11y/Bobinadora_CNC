@@ -170,6 +170,12 @@ intermedia.
 - Anadir submenus uno a uno y probar fisicamente cada fase antes de continuar.
 - Evitar timers y refrescos dinamicos en el primer paso de cada submenu.
 
+## Submenus aplicados
+
+- `Retroiluminacion`: primer submenu real de `Ajustes` creado con lazy creation.
+  No se crea en `init_all_screens()`; se crea al pulsar `Abrir
+  retroiluminacion` y vuelve localmente a `AJUSTES`.
+
 ## Checklist obligatorio antes de tocar UI
 
 - Leer este documento.

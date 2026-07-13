@@ -435,6 +435,16 @@ el puntero a `nullptr`, no crear la pantalla en `init_all_screens()`, crearla
 solo al pulsar el boton correspondiente y anadir submenus uno a uno con prueba
 fisica. Cada submenu debe tener boton volver local a `Ajustes`.
 
+### Submenu Retroiluminacion con lazy creation
+
+Se anade el primer submenu real de `Ajustes` usando el patron validado de lazy
+creation. `Retroiluminacion` se crea solo al pulsar `Abrir retroiluminacion` y
+no se registra en `init_all_screens()`.
+
+La pantalla muestra brillo actual, botones Bajo/Medio/Alto y un boton local
+`Volver` a `Ajustes`. Los controles de brillo existentes dentro de `Ajustes` se
+mantienen durante esta fase.
+
 ### Reglas para cambios UI en placa
 
 Tras revertir una regresion fisica causada por un refactor de `Ajustes` a

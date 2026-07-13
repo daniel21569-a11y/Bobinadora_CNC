@@ -133,6 +133,11 @@ void btn_navegacion_handler(lv_event_t *e) {
     lv_scr_load_anim(UIScreens::screen_settings_test, LV_SCR_LOAD_ANIM_FADE_IN,
                      300, 0, false);
   }
+  else if (strcmp(id, "AJUSTES_BRILLO") == 0) {
+    UIScreens::crear_pantalla_ajustes_brillo();
+    lv_scr_load_anim(UIScreens::screen_settings_brightness,
+                     LV_SCR_LOAD_ANIM_FADE_IN, 300, 0, false);
+  }
   else if (strcmp(id, "PRINCIPAL") == 0)
     lv_scr_load_anim(UIScreens::screen_main, LV_SCR_LOAD_ANIM_FADE_IN, 300, 0,
                      false);
