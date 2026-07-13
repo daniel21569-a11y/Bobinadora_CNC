@@ -45,6 +45,7 @@ static lv_obj_t *label_info_brightness = nullptr;
 static lv_obj_t *label_info_mode = nullptr;
 static lv_obj_t *label_info_persistent_mode = nullptr;
 static lv_obj_t *label_info_status = nullptr;
+static lv_obj_t *label_machine_status_summary = nullptr;
 
 static const char *mode_to_text(ModoBobinado mode) {
   return mode == ModoBobinado::TRANSFORMADOR ? "Transformador"
@@ -92,6 +93,17 @@ static void update_system_info_labels() {
   }
   if (label_info_status) {
     lv_label_set_text(label_info_status, status_to_text(Sistema::estado.estado));
+  }
+  if (label_machine_status_summary) {
+    lv_label_set_text_fmt(
+        label_machine_status_summary,
+        "Estado: %s | Modo: %s\nVueltas: %lu | Capa: %lu | Capas: %lu\nRPM: "
+        "%.1f / %.1f\nCompletado: %s",
+        status_to_text(Sistema::estado.estado),
+        mode_to_text(Sistema::estado.modo), Sistema::estado.vueltas_completadas,
+        Sistema::estado.vueltas_capa_actual, Sistema::estado.capas_completadas,
+        Sistema::estado.rpm_actual, Sistema::estado.rpm_objetivo,
+        Sistema::estado.bobinado_completado ? "Si" : "No");
   }
 }
 
@@ -832,6 +844,18 @@ void crear_pantalla_ajustes() {
   label_info_mode = create_info_row(4, "Modo actual", "");
   label_info_persistent_mode = create_info_row(5, "Modo cargado", "");
   label_info_status = create_info_row(6, "Estado actual", "");
+
+  lv_obj_t *machine_title = lv_label_create(info_card);
+  lv_label_set_text(machine_title, "Estado de la maquina");
+  lv_obj_set_style_text_color(machine_title, UI::color_text, 0);
+  lv_obj_set_style_text_font(machine_title, &lv_font_montserrat_12, 0);
+
+  label_machine_status_summary = lv_label_create(info_card);
+  lv_obj_set_width(label_machine_status_summary, LV_PCT(100));
+  lv_label_set_long_mode(label_machine_status_summary, LV_LABEL_LONG_WRAP);
+  lv_obj_set_style_text_color(label_machine_status_summary, UI::color_text, 0);
+  lv_obj_set_style_text_font(label_machine_status_summary,
+                             &lv_font_montserrat_12, 0);
   update_system_info_labels();
 }
 

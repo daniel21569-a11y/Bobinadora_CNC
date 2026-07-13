@@ -392,6 +392,16 @@ cambiar el brillo desde los botones Bajo/Medio/Alto.
 Esta fase no cambia la logica de bobinado, generacion de pulsos, homing, pines,
 perfiles ni persistencia.
 
+### Estado de la maquina en Ajustes
+
+Se anade una seccion compacta y de solo lectura `Estado de la maquina` dentro
+de la pantalla `Ajustes` existente.
+
+La seccion muestra estado, modo, vueltas completadas, vueltas de la capa actual,
+capas completadas, RPM actual/objetivo y si el bobinado esta completado.
+
+No se crean pantallas nuevas, submenus ni navegacion nueva.
+
 ### Reglas para cambios UI en placa
 
 Tras revertir una regresion fisica causada por un refactor de `Ajustes` a
