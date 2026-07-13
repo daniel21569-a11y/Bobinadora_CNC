@@ -420,6 +420,9 @@ No se mueven motores, no se llama a homing y no se cambian estados del sistema.
 Tras revertir una regresion fisica causada por un refactor de `Ajustes` a
 subpantallas, quedan estas reglas para v10.4:
 
+La arquitectura UI actual y el patron recomendado para futuros ajustes estan
+documentados en `docs/UI_ARCHITECTURE_V10_4.md`.
+
 - Una build `SUCCESS` no valida comportamiento fisico.
 - Todo cambio de UI debe probarse en placa.
 - Las pantallas nuevas deben anadirse de una en una.
