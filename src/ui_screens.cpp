@@ -1,6 +1,7 @@
 #include "ui_screens.h"
 #include "persistence.h"
 #include "ui_handlers.h"
+#include <cstring>
 
 void display_backlight(uint8_t brightness);
 
@@ -15,6 +16,7 @@ lv_obj_t *screen_manual_control = nullptr;
 lv_obj_t *screen_settings = nullptr;
 lv_obj_t *screen_settings_brightness = nullptr;
 lv_obj_t *screen_settings_info = nullptr;
+lv_obj_t *screen_settings_machine_status = nullptr;
 
 // Campos de configuración TRANSFORMADOR
 lv_obj_t *ta_diametro_alambre = nullptr;
@@ -151,6 +153,41 @@ static void brightness_submenu_slider_released_cb(lv_event_t *e) {
 
 static void settings_info_screen_event_cb(lv_event_t *e) {
   update_system_info_labels();
+}
+
+static void settings_machine_status_screen_event_cb(lv_event_t *e) {
+  update_system_info_labels();
+}
+
+static void settings_submenu_back_handler(lv_event_t *e) {
+  lv_obj_t *target = (lv_obj_t *)lv_event_get_target(e);
+  const char *id = (const char *)lv_obj_get_user_data(target);
+  lv_obj_t *screen_to_delete = nullptr;
+
+  if (strcmp(id, "CERRAR_AJUSTES_BRILLO") == 0) {
+    screen_to_delete = screen_settings_brightness;
+    screen_settings_brightness = nullptr;
+    label_brightness_submenu_value = nullptr;
+    slider_brightness_submenu = nullptr;
+  } else if (strcmp(id, "CERRAR_AJUSTES_INFO") == 0) {
+    screen_to_delete = screen_settings_info;
+    screen_settings_info = nullptr;
+    label_info_display_name = nullptr;
+    label_info_codename = nullptr;
+    label_info_version = nullptr;
+    label_info_brightness = nullptr;
+    label_info_mode = nullptr;
+    label_info_status = nullptr;
+  } else if (strcmp(id, "CERRAR_AJUSTES_ESTADO") == 0) {
+    screen_to_delete = screen_settings_machine_status;
+    screen_settings_machine_status = nullptr;
+    label_machine_status_summary = nullptr;
+  }
+
+  lv_scr_load(screen_settings);
+  if (screen_to_delete) {
+    lv_obj_delete_async(screen_to_delete);
+  }
 }
 
 void crear_pantalla_principal() {
@@ -810,6 +847,9 @@ void crear_pantalla_ajustes() {
   UI::create_button(card, "Informacion del sistema", "AJUSTES_INFO",
                     &UI::style_btn_primary,
                     UIHandlers::btn_navegacion_handler, 260, 38);
+  UI::create_button(card, "Estado de la maquina", "AJUSTES_ESTADO",
+                    &UI::style_btn_primary,
+                    UIHandlers::btn_navegacion_handler, 260, 38);
 
   lv_obj_t *info_card = UI::create_card(screen_settings);
   lv_obj_set_flex_grow(info_card, 1);
@@ -817,18 +857,6 @@ void crear_pantalla_ajustes() {
   lv_obj_set_flex_flow(info_card, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_style_pad_all(info_card, 8, 0);
   lv_obj_set_style_pad_row(info_card, 4, 0);
-
-  lv_obj_t *machine_title = lv_label_create(info_card);
-  lv_label_set_text(machine_title, "Estado de la maquina");
-  lv_obj_set_style_text_color(machine_title, UI::color_text, 0);
-  lv_obj_set_style_text_font(machine_title, &lv_font_montserrat_12, 0);
-
-  label_machine_status_summary = lv_label_create(info_card);
-  lv_obj_set_width(label_machine_status_summary, LV_PCT(100));
-  lv_label_set_long_mode(label_machine_status_summary, LV_LABEL_LONG_WRAP);
-  lv_obj_set_style_text_color(label_machine_status_summary, UI::color_text, 0);
-  lv_obj_set_style_text_font(label_machine_status_summary,
-                             &lv_font_montserrat_12, 0);
 
   lv_obj_t *diagnostic_title = lv_label_create(info_card);
   lv_label_set_text(diagnostic_title, "Diagnostico hardware");
@@ -885,8 +913,8 @@ void crear_pantalla_ajustes_brillo() {
   lv_obj_t *btn_back = lv_btn_create(screen_settings_brightness);
   lv_obj_set_size(btn_back, 140, 45);
   lv_obj_add_style(btn_back, &UI::style_btn_primary, 0);
-  lv_obj_set_user_data(btn_back, (void *)"AJUSTES");
-  lv_obj_add_event_cb(btn_back, UIHandlers::btn_navegacion_handler,
+  lv_obj_set_user_data(btn_back, (void *)"CERRAR_AJUSTES_BRILLO");
+  lv_obj_add_event_cb(btn_back, settings_submenu_back_handler,
                       LV_EVENT_CLICKED, NULL);
 
   lv_obj_t *label_back = lv_label_create(btn_back);
@@ -964,8 +992,58 @@ void crear_pantalla_ajustes_info() {
   lv_obj_t *btn_back = lv_btn_create(screen_settings_info);
   lv_obj_set_size(btn_back, 140, 45);
   lv_obj_add_style(btn_back, &UI::style_btn_primary, 0);
-  lv_obj_set_user_data(btn_back, (void *)"AJUSTES");
-  lv_obj_add_event_cb(btn_back, UIHandlers::btn_navegacion_handler,
+  lv_obj_set_user_data(btn_back, (void *)"CERRAR_AJUSTES_INFO");
+  lv_obj_add_event_cb(btn_back, settings_submenu_back_handler,
+                      LV_EVENT_CLICKED, NULL);
+
+  lv_obj_t *label_back = lv_label_create(btn_back);
+  lv_label_set_text(label_back, LV_SYMBOL_LEFT " Volver");
+  lv_obj_center(label_back);
+
+  update_system_info_labels();
+}
+
+void crear_pantalla_ajustes_estado() {
+  if (screen_settings_machine_status) {
+    update_system_info_labels();
+    return;
+  }
+
+  screen_settings_machine_status = lv_obj_create(NULL);
+  lv_obj_add_event_cb(screen_settings_machine_status,
+                      settings_machine_status_screen_event_cb,
+                      LV_EVENT_SCREEN_LOADED, NULL);
+  lv_obj_add_style(screen_settings_machine_status, &UI::style_main_bg, 0);
+  lv_obj_set_layout(screen_settings_machine_status, LV_LAYOUT_FLEX);
+  lv_obj_set_flex_flow(screen_settings_machine_status, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_flex_align(screen_settings_machine_status, LV_FLEX_ALIGN_START,
+                        LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_set_style_pad_all(screen_settings_machine_status, 8, 0);
+  lv_obj_set_style_pad_row(screen_settings_machine_status, 14, 0);
+  lv_obj_clear_flag(screen_settings_machine_status, LV_OBJ_FLAG_SCROLLABLE);
+
+  lv_obj_t *title = lv_label_create(screen_settings_machine_status);
+  lv_label_set_text(title, "Estado de la maquina");
+  lv_obj_add_style(title, &UI::style_header, 0);
+  lv_obj_set_style_text_font(title, &lv_font_montserrat_16, 0);
+
+  lv_obj_t *status_card = UI::create_card(screen_settings_machine_status);
+  lv_obj_set_width(status_card, LV_PCT(100));
+  lv_obj_set_height(status_card, LV_SIZE_CONTENT);
+  lv_obj_set_style_pad_all(status_card, 10, 0);
+
+  label_machine_status_summary = lv_label_create(status_card);
+  lv_obj_set_width(label_machine_status_summary, LV_PCT(100));
+  lv_label_set_long_mode(label_machine_status_summary, LV_LABEL_LONG_WRAP);
+  lv_obj_set_style_text_color(label_machine_status_summary, UI::color_text, 0);
+  lv_obj_set_style_text_font(label_machine_status_summary,
+                             &lv_font_montserrat_12, 0);
+
+  lv_obj_t *btn_back = lv_btn_create(screen_settings_machine_status);
+  lv_obj_set_size(btn_back, 140, 45);
+  lv_obj_add_style(btn_back, &UI::style_btn_primary, 0);
+  lv_obj_set_user_data(btn_back, (void *)"CERRAR_AJUSTES_ESTADO");
+  lv_obj_add_event_cb(btn_back, settings_submenu_back_handler,
                       LV_EVENT_CLICKED, NULL);
 
   lv_obj_t *label_back = lv_label_create(btn_back);

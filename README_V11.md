@@ -431,6 +431,14 @@ el puntero a `nullptr`, no crear la pantalla en `init_all_screens()`, crearla
 solo al pulsar el boton correspondiente y anadir submenus uno a uno con prueba
 fisica. Cada submenu debe tener boton volver local a `Ajustes`.
 
+Validacion posterior en placa: los submenus de `Ajustes` no deben quedar vivos
+permanentemente. El patron final para v10.4 es:
+
+- Pantallas principales: persistentes, creadas en `init_all_screens()`.
+- Submenus de `Ajustes`: temporales, creados bajo demanda y destruidos al volver
+  a `Ajustes`.
+- No dejar varios submenus vivos en memoria.
+
 ### Submenu Retroiluminacion con lazy creation
 
 Se anade el primer submenu real de `Ajustes` usando el patron validado de lazy

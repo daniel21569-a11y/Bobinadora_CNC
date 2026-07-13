@@ -136,6 +136,11 @@ void btn_navegacion_handler(lv_event_t *e) {
     lv_scr_load_anim(UIScreens::screen_settings_info,
                      LV_SCR_LOAD_ANIM_FADE_IN, 300, 0, false);
   }
+  else if (strcmp(id, "AJUSTES_ESTADO") == 0) {
+    UIScreens::crear_pantalla_ajustes_estado();
+    lv_scr_load_anim(UIScreens::screen_settings_machine_status,
+                     LV_SCR_LOAD_ANIM_FADE_IN, 300, 0, false);
+  }
   else if (strcmp(id, "PRINCIPAL") == 0)
     lv_scr_load_anim(UIScreens::screen_main, LV_SCR_LOAD_ANIM_FADE_IN, 300, 0,
                      false);
