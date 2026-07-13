@@ -372,5 +372,25 @@ arrancar. Tras `display_init()`, el firmware aplica el brillo guardado con
 El boton fisico `SW1` mantiene su ciclo de brillo existente y ahora tambien
 guarda el nuevo valor en `Preferences`.
 
+### Informacion del sistema en Ajustes
+
+Se amplia la pantalla `Ajustes` con una seccion de solo lectura
+`Informacion del sistema`.
+
+La seccion muestra:
+
+- `FirmwareInfo::DISPLAY_NAME`
+- `FirmwareInfo::CODENAME`
+- `FirmwareInfo::VERSION`
+- brillo actual (`Sistema::estado.brillo_backlight`)
+- modo actual/cargado (`Sistema::estado.modo`)
+- estado actual (`Sistema::estado.estado`)
+
+Los valores se refrescan al entrar en la pantalla de ajustes y despues de
+cambiar el brillo desde los botones Bajo/Medio/Alto.
+
+Esta fase no cambia la logica de bobinado, generacion de pulsos, homing, pines,
+perfiles ni persistencia.
+
 No se implementa todavia actualizacion de firmware por SD/USB ni otros ajustes
 de sistema.
