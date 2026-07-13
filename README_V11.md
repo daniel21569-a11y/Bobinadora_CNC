@@ -372,6 +372,18 @@ arrancar. Tras `display_init()`, el firmware aplica el brillo guardado con
 El boton fisico `SW1` mantiene su ciclo de brillo existente y ahora tambien
 guarda el nuevo valor en `Preferences`.
 
+### Submenu Retroiluminacion - Fase A
+
+Se anade una subpantalla `Retroiluminacion` accesible desde `Ajustes`, sin
+convertir todavia `Ajustes` en un indice completo.
+
+La pantalla `Ajustes` conserva sus controles Bajo/Medio/Alto actuales y anade
+un boton `Abrir retroiluminacion`. La nueva subpantalla muestra el brillo actual
+y reutiliza la misma logica de brillo y persistencia.
+
+El boton volver de la subpantalla regresa a `Ajustes`. No se crean mas
+subpantallas ni se migran otras secciones en esta fase.
+
 ### Informacion del sistema en Ajustes
 
 Se amplia la pantalla `Ajustes` con una seccion de solo lectura
