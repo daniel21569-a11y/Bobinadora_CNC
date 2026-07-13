@@ -11,6 +11,7 @@ lv_obj_t *screen_config_honeycomb = nullptr;
 lv_obj_t *screen_winding = nullptr;
 lv_obj_t *screen_manual_control = nullptr;
 lv_obj_t *screen_settings = nullptr;
+lv_obj_t *screen_settings_test = nullptr;
 
 // Campos de configuración TRANSFORMADOR
 lv_obj_t *ta_diametro_alambre = nullptr;
@@ -768,6 +769,10 @@ void crear_pantalla_ajustes() {
   lv_obj_add_style(title, &UI::style_header, 0);
   lv_obj_set_style_text_font(title, &lv_font_montserrat_16, 0);
 
+  UI::create_button(card, "Prueba pantalla", "AJUSTES_TEST",
+                    &UI::style_btn_primary,
+                    UIHandlers::btn_navegacion_handler, 220, 38);
+
   lv_obj_t *row = lv_obj_create(card);
   lv_obj_set_width(row, LV_PCT(100));
   lv_obj_set_height(row, LV_SIZE_CONTENT);
@@ -875,6 +880,37 @@ void crear_pantalla_ajustes() {
   lv_obj_set_style_text_font(label_hardware_diagnostic, &lv_font_montserrat_12,
                              0);
   update_system_info_labels();
+}
+
+void crear_pantalla_ajustes_test() {
+  if (screen_settings_test) {
+    return;
+  }
+
+  screen_settings_test = lv_obj_create(NULL);
+  lv_obj_add_style(screen_settings_test, &UI::style_main_bg, 0);
+  lv_obj_set_layout(screen_settings_test, LV_LAYOUT_FLEX);
+  lv_obj_set_flex_flow(screen_settings_test, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_flex_align(screen_settings_test, LV_FLEX_ALIGN_CENTER,
+                        LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_set_style_pad_all(screen_settings_test, 8, 0);
+  lv_obj_set_style_pad_row(screen_settings_test, 18, 0);
+  lv_obj_clear_flag(screen_settings_test, LV_OBJ_FLAG_SCROLLABLE);
+
+  lv_obj_t *label = lv_label_create(screen_settings_test);
+  lv_label_set_text(label, "Prueba pantalla");
+  lv_obj_add_style(label, &UI::style_header, 0);
+
+  lv_obj_t *btn_back = lv_btn_create(screen_settings_test);
+  lv_obj_set_size(btn_back, 140, 45);
+  lv_obj_add_style(btn_back, &UI::style_btn_primary, 0);
+  lv_obj_set_user_data(btn_back, (void *)"AJUSTES");
+  lv_obj_add_event_cb(btn_back, UIHandlers::btn_navegacion_handler,
+                      LV_EVENT_CLICKED, NULL);
+
+  lv_obj_t *label_back = lv_label_create(btn_back);
+  lv_label_set_text(label_back, LV_SYMBOL_LEFT " Volver");
+  lv_obj_center(label_back);
 }
 
 void init_all_screens() {

@@ -415,6 +415,20 @@ porque el eje Y es el enrollador del carrete y no tiene final de carrera.
 
 No se mueven motores, no se llama a homing y no se cambian estados del sistema.
 
+### Prueba de pantalla LVGL bajo demanda
+
+Se anade una prueba controlada de arquitectura UI para distinguir si las
+regresiones vienen de crear pantallas durante `init_all_screens()` o de crear y
+cargar una pantalla nueva en general.
+
+La pantalla `Prueba pantalla` se crea solo bajo demanda desde `Ajustes`, al
+pulsar el boton correspondiente. No se crea durante el arranque ni se registra
+en `init_all_screens()`.
+
+La pantalla contiene solo un texto y un boton `Volver` a `Ajustes`. No usa
+timers, no refresca labels dinamicos y no toca brillo, estado de maquina,
+diagnostico hardware, motores, homing ni logica de bobinado.
+
 ### Reglas para cambios UI en placa
 
 Tras revertir una regresion fisica causada por un refactor de `Ajustes` a
