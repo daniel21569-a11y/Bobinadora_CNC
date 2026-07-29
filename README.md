@@ -1,93 +1,76 @@
-# Bobinadora CNC v10.3
+# Bobinadora CNC v10.5
 
 ![Bobinadora CNC](docs/images/bobinadora_CNC.jpg)
 
-Proyecto de Bobinadora CNC automatizada basada en **ESP32-S3** con una interfaz gráfica moderna utilizando **LVGL 9.x**. Esta solución integral permite el bobinado preciso de transformadores y bobinas de nido de abeja, ofreciendo un control total sobre parámetros como el diámetro del hilo, la velocidad y la distribución de capas.
+Proyecto de bobinadora CNC automatizada basado en **ESP32-S3**, LVGL 9.x y la
+placa **JC4827W543** con pantalla RGB de 4,3 pulgadas y touch GT911.
 
-Esta versión (10.3) está optimizada para la placa profesional **JC4827W543** (4.3" 480x272 RGB LCD), aprovechando su potencia para gestionar una interfaz fluida y un control de motores en tiempo real de alta fidelidad.
+La aplicación permite bobinar transformadores y bobinas de nido de abeja con
+control de velocidad, avance del carro, capas y parámetros configurables.
 
-## 🚀 Novedades v10.3
-- **Corrección de Bugs**: Solucionado el error donde las vueltas totales mostraban siempre 0.
-- **Mejora de Interfaz**: Títulos de modo dinámicos en la pantalla de bobinado (Transformador / Nido de Abeja).
-- **Optimización**: Mejora en la estabilidad de la tarea de UI en el Core 0.
-- **Limpieza**: Eliminación de código obsoleto y mejora en la legibilidad.
+## Novedades v10.5
 
-## 🛠 Hardware Necesario
+- Actualización de firmware desde tarjeta MicroSD mediante `manifest.json`.
+- Validación de placa, tamaño y hash SHA-256 antes de instalar.
+- Instalación OTA con particiones `app0`/`app1` y reinicio manual posterior.
+- Barra de progreso actualizada durante la validación y escritura.
+- Pantallas de configuración creadas bajo demanda y destruidas al salir.
+- Mejoras de estabilidad en homing, navegación y tarea de interfaz.
+- Caché de compilación persistente de PlatformIO.
 
-### Controlador
-- **Placa**: JC4827W543 (ESP32-S3 con pantalla integrada de 4.3").
-- **Pantalla**: 480x272 RGB LCD (NV3041A).
-- **Touch**: Capacitivo GT911.
+## Modos de bobinado
 
-### Motores y Control
-- **Driver de Motores**: Recomendados A4988, DRV8825 o TB6600.
-- **Motores**: NEMA 17 o similares.
-- **Eje X (Carro)**: Desplaza el hilo a lo largo del carrete.
-- **Eje Y (Mandril)**: Gira el carrete para recibir el hilo.
-- **Finales de Carrera**: 2 microswitches (Eje X y Eje Y).
+- **Transformador**: bobinado capa a capa con avance calculado según el hilo.
+- **Nido de abeja**: bobinado cruzado con desfase angular configurable.
+- **Control manual**: movimiento independiente de los ejes para preparar la
+  posición inicial.
 
-### Pinout (Configuración por Defecto)
-| Componente | Pin ESP32-S3 |
-|------------|--------------|
-| **Eje X - STEP** | 5 |
-| **Eje X - DIR** | 9 |
-| **Eje X - EN** | 14 |
-| **Eje X - LIMIT** | 46 |
-| **Eje Y - STEP** | 6 |
-| **Eje Y - DIR** | 7 |
-| **Eje Y - EN** | 15 |
-| **Eje Y - LIMIT** | 16 |
-| **Touch SDA** | 8 |
-| **Touch SCL** | 4 |
-| **Touch INT** | 3 |
-| **Touch RESET** | 38 |
+## Actualización por MicroSD
 
-## 💻 Instalación y Carga
+La tarjeta debe contener la versión con esta estructura:
 
-Este proyecto está desarrollado bajo **PlatformIO**.
+```text
+/firmware/10.5/manifest.json
+/firmware/10.5/bobinadora.bin
+```
 
-1. **Requisitos**: Tener instalado VS Code con la extensión PlatformIO.
-2. **Clonar**: Descarga o clona este repositorio.
-3. **Dependencias**: PlatformIO descargará automáticamente las librerías necesarias:
-   - `lvgl 9.2.2`
-   - `GFX Library for Arduino`
-   - `TouchLib`
-4. **Cargar**: 
-   - Conecta la placa JC4827W543 vía USB.
-   - Pulsa el icono de **Upload** (flecha derecha) en la barra inferior de PlatformIO.
+En la máquina: **Ajustes → Actualizar firmware → Buscar en SD**. Selecciona la
+versión, pulsa **Instalar seleccionada** y, cuando finalice, pulsa
+**Reiniciar para aplicar**.
 
-## ⚙️ Funcionamiento
+El manifiesto debe declarar `version`, `board`, `firmware`, `size` y `sha256`.
+La placa compatible es `JC4827W543`. La actualización por WiFi queda preparada
+para una fase posterior.
 
-### Modos de Bobinado
-1. **Transformador**: Bobinado tradicional capa por capa. El sistema calcula automáticamente el avance del carro basándose en el diámetro del hilo.
-   
-   ![Parámetros Transformador](docs/images/transformador_parametros.jpg) | ![Bobinando Transformador](docs/images/transformador_bobinando.jpg)
+## Hardware
 
-2. **Nido de Abeja (Honeycomb)**: Bobinado cruzado con desfase angular, ideal para bobinas de alta frecuencia o de aire.
-   
-   ![Parámetros Nido de Abeja](docs/images/nido_abeja_parametros.jpg) | ![Bobinando Nido de Abeja](docs/images/nido_abaja_bobinando.jpg)
+| Componente | Configuración |
+| --- | --- |
+| Placa | JC4827W543 / ESP32-S3 |
+| Pantalla | RGB LCD 480x272 / NV3041A |
+| Touch | GT911, SDA 8, SCL 4, INT 3, RESET 38 |
+| Eje X | STEP 5, DIR 9, ENABLE 14, LIMIT 46 |
+| Eje Y | STEP 6, DIR 7, ENABLE 15, LIMIT 16 |
+| MicroSD | SPI: SCK 12, MOSI 11, MISO 13, CS 10 |
 
-### Pasos de Operación
-1. **Inicio**: Al encender, el sistema muestra la pantalla de bienvenida.
-   
-   ![Pantalla de Inicio](docs/images/pantalla_inicio.jpg)
+## Desarrollo
 
-2. **Homing**: El sistema realiza un homing automático para encontrar el punto cero.
-3. **Configuración**: Selecciona el modo y ajusta los parámetros (diámetro de hilo, vueltas, ancho, etc.).
-   
-   ![Selección de Modo](docs/images/seleccione_modo.jpg) | ![Edición de Datos](docs/images/editar_datos.jpg)
+El proyecto se compila con PlatformIO en VS Code:
 
-3. **Control Manual**: Puedes mover los ejes manualmente desde la pantalla de control manual para ajustar el inicio del bobinado.
-   
-   ![Control Manual](docs/images/control_manual.jpg)
+```text
+platformio run -e JC4827W543
+platformio run -e JC4827W543 -t upload
+```
 
-4. **Inicio**: Pulsa "BOBINAR" e inicia el proceso. La pantalla mostrará progreso real, RPM y tiempo restante.
+Ramas principales:
 
----
----
-**Nota**: El soporte para tarjetas MicroSD (ProfileManager) está actualmente deshabilitado en esta versión para mayor estabilidad del hardware ESP32-S3.
+- `master`: versión estable publicada.
+- `develop`: futuras mejoras y pruebas.
+- Etiquetas `v10.3`, `v10.4`, `v10.5`: versiones reproducibles.
 
-## 👥 Créditos y Copyright
-- **Daniel Rodriguez Gonzalez** ([@daniel21569-a11y](https://github.com/daniel21569-a11y)) - Desarrollador y diseñador principal.
+Las notas detalladas de esta versión están en
+[`docs/RELEASE_NOTES_V10_5.md`](docs/RELEASE_NOTES_V10_5.md).
 
-Copyright (c) 2025 Daniel Rodriguez Gonzalez. Todos los derechos reservados bajo la licencia GPL v3.
+## Licencia
+
+GPL v3. Consulta el archivo `LICENSE` para conocer los términos completos.
