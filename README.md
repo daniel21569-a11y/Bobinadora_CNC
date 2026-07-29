@@ -25,6 +25,30 @@ control de velocidad, avance del carro, capas y parámetros configurables.
 - **Control manual**: movimiento independiente de los ejes para preparar la
   posición inicial.
 
+## Guía visual
+
+### Selección y configuración
+
+![Selección de modo](docs/images/seleccione_modo.jpg)
+
+![Parámetros del transformador](docs/images/transformador_parametros.jpg)
+
+![Parámetros del nido de abeja](docs/images/nido_abeja_parametros.jpg)
+
+### Proceso de bobinado
+
+![Bobinado de transformador](docs/images/transformador_bobinando.jpg)
+
+![Bobinado de nido de abeja](docs/images/nido_abaja_bobinando.jpg)
+
+### Otras pantallas
+
+![Pantalla de inicio](docs/images/pantalla_inicio.jpg)
+
+![Edición de datos](docs/images/editar_datos.jpg)
+
+![Control manual](docs/images/control_manual.jpg)
+
 ## Actualización por MicroSD
 
 La tarjeta debe contener la versión con esta estructura:
@@ -41,6 +65,32 @@ versión, pulsa **Instalar seleccionada** y, cuando finalice, pulsa
 El manifiesto debe declarar `version`, `board`, `firmware`, `size` y `sha256`.
 La placa compatible es `JC4827W543`. La actualización por WiFi queda preparada
 para una fase posterior.
+
+## Flujo de trabajo recomendado
+
+1. Enciende la máquina y comprueba que la pantalla responde correctamente.
+2. Realiza el homing para establecer el origen del carro.
+3. Selecciona **Transformador** o **Nido de abeja**.
+4. Introduce los parámetros del carrete, hilo, vueltas y velocidad.
+5. Usa **Control manual** si necesitas ajustar la posición inicial.
+6. Pulsa **Bobinar** y supervisa el proceso desde la pantalla de trabajo.
+
+Las pantallas de configuración se crean al entrar y se destruyen al salir. Esto
+reduce el consumo permanente de memoria y permite añadir nuevos submenús con
+menos riesgo de saturar la interfaz.
+
+## Solución rápida de problemas
+
+- **No aparece una versión en la SD**: comprueba que la carpeta está dentro de
+  `/firmware/` y que contiene `manifest.json` y `bobinadora.bin`.
+- **Hash distinto**: vuelve a copiar el firmware y el manifiesto como pareja;
+  el valor `sha256` debe corresponder exactamente al archivo `.bin`.
+- **La instalación termina y pide reiniciar**: es el comportamiento esperado;
+  pulsa **Reiniciar para aplicar** cuando la barra llegue al 100 %.
+- **La SD no se reconoce**: expúlsala correctamente en el ordenador, prueba
+  FAT32 y comprueba que está completamente insertada en el lector.
+- **La placa se reinicia durante una actualización**: no retires la
+  alimentación, espera al arranque y revisa el monitor serie a 115200 baudios.
 
 ## Hardware
 
@@ -70,6 +120,17 @@ Ramas principales:
 
 Las notas detalladas de esta versión están en
 [`docs/RELEASE_NOTES_V10_5.md`](docs/RELEASE_NOTES_V10_5.md).
+
+## Publicar una nueva versión
+
+1. Actualiza `FirmwareInfo::VERSION` y `FirmwareInfo::DISPLAY_NAME` en
+   `include/config.h`.
+2. Actualiza las notas de lanzamiento y genera el firmware.
+3. Calcula el tamaño y el SHA-256 del archivo `.bin`.
+4. Prepara `/firmware/<version>/manifest.json` y `bobinadora.bin`.
+5. Prueba la instalación desde SD antes de crear la etiqueta de Git.
+6. Publica el commit en `develop` y, cuando esté validado, avanza `master` y
+   crea la etiqueta correspondiente, por ejemplo `v10.6`.
 
 ## Licencia
 
