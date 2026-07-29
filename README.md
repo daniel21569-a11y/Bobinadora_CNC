@@ -51,6 +51,11 @@ control de velocidad, avance del carro, capas y parámetros configurables.
 
 ## Actualización por MicroSD
 
+La descarga recomendada para usuarios está en
+[releases/](releases/). Para una instalación rápida, descarga el paquete
+[Bobinadora_CNC_v10.5_SD.zip](releases/v10.5/Bobinadora_CNC_v10.5_SD.zip) y
+extráelo directamente en la raíz de la tarjeta SD.
+
 La tarjeta debe contener la versión con esta estructura:
 
 ```text
