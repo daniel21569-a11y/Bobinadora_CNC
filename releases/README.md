@@ -13,6 +13,11 @@ La versión estable actual es **v10.5**.
 
 ## Instalación rápida
 
+> **Importante:** la actualización por SD no sirve para instalar el firmware
+> inicial. La placa debe tener instalada como mínimo la versión **v10.5**,
+> porque es la primera que incorpora el actualizador OTA desde tarjeta SD.
+> Después podrá utilizarse para instalar versiones futuras.
+
 1. Descarga `Bobinadora_CNC_v10.5_SD.zip`.
 2. Extrae su contenido directamente en la raíz de la tarjeta SD.
 3. Comprueba que la tarjeta queda así:

@@ -11,6 +11,9 @@ control de velocidad, avance del carro, capas y parámetros configurables.
 ## Novedades v10.5
 
 - **Descarga directa para SD**: [Bobinadora_CNC_v10.5_SD.zip](releases/v10.5/Bobinadora_CNC_v10.5_SD.zip).
+- **Importante**: el paquete SD no instala el firmware inicial. La placa debe
+  tener instalada al menos la v10.5; a partir de ella podrá actualizarse por SD
+  a versiones futuras.
 - Actualización de firmware desde tarjeta MicroSD mediante `manifest.json`.
 - Validación de placa, tamaño y hash SHA-256 antes de instalar.
 - Instalación OTA con particiones `app0`/`app1` y reinicio manual posterior.
