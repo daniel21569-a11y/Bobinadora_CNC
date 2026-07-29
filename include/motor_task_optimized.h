@@ -12,6 +12,7 @@
 #define MOTOR_TASK_OPTIMIZED_H
 
 #include "config.h"
+#include "machine_controller.h"
 
 // =========================================================================
 // ESTRUCTURA DE ESTADO LOCAL DEL MOTOR (SOLO CORE 1)
@@ -275,9 +276,9 @@ void motor_control_task_optimized(void *pvParameters) {
     if (Sistema::estado.estado == EstadoBobinado::BOBINANDO) {
       bool limite_x = !digitalRead(Hardware::Motor::LIMIT_X_PIN);
       if (limite_x) {
-        Sistema::estado.estado = EstadoBobinado::ERROR;
         digitalWrite(Hardware::Motor::ENABLE_X_PIN, HIGH);
         digitalWrite(Hardware::Motor::ENABLE_Y_PIN, HIGH);
+        MachineController::on_motion_error();
         continue;
       }
     }
@@ -335,8 +336,7 @@ void motor_control_task_optimized(void *pvParameters) {
                 : Sistema::config_nido_abeja.num_vueltas;
 
         if (Sistema::estado.vueltas_completadas >= vueltas_objetivo) {
-          Sistema::estado.estado = EstadoBobinado::LISTO;
-          Sistema::estado.reset_solicitado = true;
+          MachineController::on_winding_completed();
         }
       }
     } else {

@@ -19,6 +19,7 @@
 
 // Project headers
 #include "config.h"
+#include "machine_controller.h"
 #include "motor_task_optimized.h"
 #include "persistence.h"
 #include "profile_manager.h"
@@ -129,6 +130,7 @@ bool UIHandlers::homing_ejes() {
     Sistema::estado.estado = EstadoBobinado::ERROR;
     Sistema::estado.movimiento_manual_activo = false;
     Sistema::estado.rpm_objetivo = 0.0f;
+    MachineController::on_homing_finished(false);
     UIHandlers::set_homing_error_visible(true);
     return false;
   }
@@ -146,8 +148,7 @@ bool UIHandlers::homing_ejes() {
   }
 
   Sistema::estado.reset();
-  Sistema::estado.estado = EstadoBobinado::LISTO;
-  Sistema::estado.movimiento_manual_activo = false;
+  MachineController::on_homing_finished(true);
   UIHandlers::set_homing_error_visible(false);
   Serial.println(">>> HOMING COMPLETADO <<<\n");
   return true;
@@ -397,8 +398,7 @@ void setup() {
   UI::init_styles();
   Serial.println("[UI] ✓ Estilos inicializados");
 
-  UI::Numpad::create();
-  Serial.println("[UI] ✓ Numpad creado");
+  Serial.println("[UI] Numpad preparado para creacion bajo demanda");
 
   UIScreens::init_all_screens();
   Serial.println("[UI] ✓ Pantallas creadas");
@@ -438,7 +438,7 @@ void setup() {
   // Tarea de UI (LVGL) en Core 0 (Prioridad media)
   xTaskCreatePinnedToCore(
       ui_task, "UICore0",
-      8192, // Stack size generoso para LVGL
+      16384, // Stack ampliado para LVGL y escaneo de SD
       NULL,
       2, // Prioridad media (mayor que logging, menor que motores)
       NULL,

@@ -142,6 +142,10 @@ void init_styles() {
 
 // Implementación del Numpad
 void Numpad::create() {
+  if (overlay && container) {
+    return;
+  }
+
   overlay = lv_obj_create(lv_layer_top());
   lv_obj_set_size(overlay, Hardware::SCREEN_WIDTH, Hardware::SCREEN_HEIGHT);
   lv_obj_set_style_bg_color(overlay, lv_color_black(), 0);
@@ -234,6 +238,10 @@ void Numpad::create() {
 }
 
 void Numpad::show(lv_obj_t *ta) {
+  if (!container) {
+    create();
+  }
+
   if (container && ta) {
     current_textarea = ta;
     const char *current_value = lv_textarea_get_text(ta);

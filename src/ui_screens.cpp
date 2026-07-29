@@ -1,7 +1,12 @@
 #include "ui_screens.h"
+#include "firmware_update.h"
 #include "persistence.h"
+#include "profile_manager.h"
 #include "ui_handlers.h"
 #include <cstring>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <vector>
 
 void display_backlight(uint8_t brightness);
 
@@ -17,6 +22,7 @@ lv_obj_t *screen_settings = nullptr;
 lv_obj_t *screen_settings_brightness = nullptr;
 lv_obj_t *screen_settings_info = nullptr;
 lv_obj_t *screen_settings_machine_status = nullptr;
+lv_obj_t *screen_settings_firmware = nullptr;
 
 // Campos de configuración TRANSFORMADOR
 lv_obj_t *ta_diametro_alambre = nullptr;
@@ -51,9 +57,20 @@ static lv_obj_t *label_info_brightness = nullptr;
 static lv_obj_t *label_info_mode = nullptr;
 static lv_obj_t *label_info_status = nullptr;
 static lv_obj_t *label_machine_status_summary = nullptr;
-static lv_obj_t *label_hardware_diagnostic = nullptr;
 static lv_obj_t *label_brightness_submenu_value = nullptr;
 static lv_obj_t *slider_brightness_submenu = nullptr;
+static lv_obj_t *firmware_status_label = nullptr;
+static lv_obj_t *firmware_version_dropdown = nullptr;
+static lv_obj_t *firmware_progress_bar = nullptr;
+static lv_obj_t *firmware_install_button = nullptr;
+static lv_obj_t *firmware_restart_button = nullptr;
+static lv_timer_t *firmware_update_timer = nullptr;
+static std::vector<FirmwareUpdate::Package> firmware_packages;
+static volatile bool firmware_install_running = false;
+static volatile bool firmware_install_finished = false;
+static volatile bool firmware_install_success = false;
+static volatile uint8_t firmware_install_progress = 0;
+static String firmware_install_error;
 
 static const char *mode_to_text(ModoBobinado mode) {
   return mode == ModoBobinado::TRANSFORMADOR ? "Transformador"
@@ -109,11 +126,6 @@ static void update_system_info_labels() {
         Sistema::estado.rpm_actual, Sistema::estado.rpm_objetivo,
         Sistema::estado.bobinado_completado ? "Si" : "No");
   }
-  if (label_hardware_diagnostic) {
-    bool limit_x_pressed = !digitalRead(Hardware::Motor::LIMIT_X_PIN);
-    lv_label_set_text_fmt(label_hardware_diagnostic, "Final carrera X: %s",
-                          limit_x_pressed ? "PULSADO" : "LIBRE");
-  }
 }
 
 static void refresh_system_info_event_cb(lv_event_t *e) {
@@ -159,6 +171,129 @@ static void settings_machine_status_screen_event_cb(lv_event_t *e) {
   update_system_info_labels();
 }
 
+static void firmware_progress_cb(uint8_t progress) {
+  firmware_install_progress = progress;
+}
+
+static void firmware_install_task(void *parameter) {
+  FirmwareUpdate::Package *package =
+      static_cast<FirmwareUpdate::Package *>(parameter);
+  String error;
+  bool success = FirmwareUpdate::install_from_sd(*package, error,
+                                                 firmware_progress_cb);
+  firmware_install_error = error;
+  firmware_install_success = success;
+  firmware_install_finished = true;
+  firmware_install_running = false;
+  delete package;
+  vTaskDelete(nullptr);
+}
+
+static void firmware_update_timer_cb(lv_timer_t *timer) {
+  if (firmware_progress_bar)
+    lv_bar_set_value(firmware_progress_bar, firmware_install_progress,
+                     LV_ANIM_OFF);
+
+  if (firmware_install_running) {
+    if (firmware_status_label)
+      lv_label_set_text_fmt(firmware_status_label,
+                            "Procesando actualizacion: %u%%",
+                            firmware_install_progress);
+    return;
+  }
+
+  if (!firmware_install_finished)
+    return;
+
+  firmware_install_finished = false;
+  if (firmware_install_success) {
+    if (firmware_status_label)
+      lv_label_set_text(firmware_status_label,
+                        "Actualizacion completada correctamente.\nPulse Reiniciar para aplicar.");
+    if (firmware_restart_button)
+      lv_obj_clear_state(firmware_restart_button, LV_STATE_DISABLED);
+  } else {
+    if (firmware_status_label)
+      lv_label_set_text(firmware_status_label, firmware_install_error.c_str());
+    if (firmware_install_button)
+      lv_obj_clear_state(firmware_install_button, LV_STATE_DISABLED);
+  }
+}
+
+static void refresh_firmware_packages() {
+  if (!firmware_version_dropdown || !firmware_status_label)
+    return;
+
+  String error;
+  if (!FirmwareUpdate::scan_sd(firmware_packages, error)) {
+    lv_dropdown_set_options(firmware_version_dropdown, "Sin versiones");
+    lv_dropdown_set_selected(firmware_version_dropdown, 0);
+    lv_label_set_text(firmware_status_label, error.c_str());
+    if (firmware_install_button)
+      lv_obj_add_state(firmware_install_button, LV_STATE_DISABLED);
+    return;
+  }
+
+  String options;
+  for (size_t i = 0; i < firmware_packages.size(); ++i) {
+    if (i > 0)
+      options += "\n";
+    options += firmware_packages[i].version;
+    if (!firmware_packages[i].compatible)
+      options += " (incompatible)";
+  }
+  lv_dropdown_set_options(firmware_version_dropdown, options.c_str());
+  lv_dropdown_set_selected(firmware_version_dropdown, 0);
+  lv_label_set_text_fmt(firmware_status_label, "%u versiones encontradas",
+                        (unsigned)firmware_packages.size());
+  if (firmware_install_button)
+    lv_obj_clear_state(firmware_install_button, LV_STATE_DISABLED);
+}
+
+static void firmware_scan_button_cb(lv_event_t *e) {
+  refresh_firmware_packages();
+}
+
+static void firmware_restart_button_cb(lv_event_t *e) {
+  if (firmware_status_label)
+    lv_label_set_text(firmware_status_label, "Reiniciando para aplicar...");
+  delay(200);
+  ESP.restart();
+}
+
+static void firmware_install_button_cb(lv_event_t *e) {
+  if (firmware_install_running || !firmware_version_dropdown ||
+      firmware_packages.empty())
+    return;
+
+  uint16_t selected = lv_dropdown_get_selected(firmware_version_dropdown);
+  if (selected >= firmware_packages.size())
+    return;
+
+  lv_obj_add_state(firmware_install_button, LV_STATE_DISABLED);
+  if (firmware_restart_button)
+    lv_obj_add_state(firmware_restart_button, LV_STATE_DISABLED);
+  firmware_install_progress = 0;
+  firmware_install_finished = false;
+  firmware_install_success = false;
+  firmware_install_error = "";
+  lv_label_set_text(firmware_status_label,
+                    "Instalando. No retire la alimentacion...");
+  FirmwareUpdate::Package *package =
+      new FirmwareUpdate::Package(firmware_packages[selected]);
+  firmware_install_running = true;
+  TaskHandle_t task_handle = nullptr;
+  if (xTaskCreatePinnedToCore(firmware_install_task, "FirmwareInstall", 16384,
+                              package, 1, &task_handle, 0) != pdPASS) {
+    delete package;
+    firmware_install_running = false;
+    lv_label_set_text(firmware_status_label,
+                      "No se pudo iniciar la tarea de actualizacion");
+    lv_obj_clear_state(firmware_install_button, LV_STATE_DISABLED);
+    return;
+  }
+}
+
 static void settings_submenu_back_handler(lv_event_t *e) {
   lv_obj_t *target = (lv_obj_t *)lv_event_get_target(e);
   const char *id = (const char *)lv_obj_get_user_data(target);
@@ -182,6 +317,19 @@ static void settings_submenu_back_handler(lv_event_t *e) {
     screen_to_delete = screen_settings_machine_status;
     screen_settings_machine_status = nullptr;
     label_machine_status_summary = nullptr;
+  } else if (strcmp(id, "CERRAR_AJUSTES_FIRMWARE") == 0) {
+    screen_to_delete = screen_settings_firmware;
+    screen_settings_firmware = nullptr;
+    firmware_status_label = nullptr;
+    firmware_version_dropdown = nullptr;
+    firmware_progress_bar = nullptr;
+    firmware_install_button = nullptr;
+    firmware_restart_button = nullptr;
+    if (firmware_update_timer) {
+      lv_timer_del(firmware_update_timer);
+      firmware_update_timer = nullptr;
+    }
+    firmware_packages.clear();
   }
 
   lv_scr_load(screen_settings);
@@ -407,6 +555,10 @@ void crear_pantalla_seleccion_modo() {
 }
 
 void crear_pantalla_configuracion() {
+  if (screen_config) {
+    return;
+  }
+
   screen_config = lv_obj_create(NULL);
   lv_obj_add_style(screen_config, &UI::style_main_bg, 0);
   lv_obj_set_layout(screen_config, LV_LAYOUT_FLEX);
@@ -492,6 +644,10 @@ void crear_pantalla_configuracion() {
 }
 
 void crear_pantalla_configuracion_honeycomb() {
+  if (screen_config_honeycomb) {
+    return;
+  }
+
   screen_config_honeycomb = lv_obj_create(NULL);
   lv_obj_add_style(screen_config_honeycomb, &UI::style_main_bg, 0);
   lv_obj_set_layout(screen_config_honeycomb, LV_LAYOUT_FLEX);
@@ -568,6 +724,37 @@ void crear_pantalla_configuracion_honeycomb() {
   ta_hc_desfase_grados = create_param_row(3, "Desfase", buf_grados, "°");
   ta_hc_num_vueltas = create_param_row(4, "Num. vueltas", buf_vueltas, "");
   ta_hc_velocidad = create_param_row(5, "Velocidad", buf_vel, "RPM");
+}
+
+void destruir_pantalla_configuracion() {
+  if (!screen_config) {
+    return;
+  }
+
+  lv_obj_t *screen_to_delete = screen_config;
+  screen_config = nullptr;
+  ta_diametro_alambre = nullptr;
+  ta_longitud_bobinado = nullptr;
+  ta_vueltas_total = nullptr;
+  ta_velocidad_rpm = nullptr;
+  sw_detener_en_capas = nullptr;
+  lv_obj_delete_async(screen_to_delete);
+}
+
+void destruir_pantalla_configuracion_honeycomb() {
+  if (!screen_config_honeycomb) {
+    return;
+  }
+
+  lv_obj_t *screen_to_delete = screen_config_honeycomb;
+  screen_config_honeycomb = nullptr;
+  ta_hc_diametro_hilo = nullptr;
+  ta_hc_diametro_carrete = nullptr;
+  ta_hc_ancho_carrete = nullptr;
+  ta_hc_desfase_grados = nullptr;
+  ta_hc_num_vueltas = nullptr;
+  ta_hc_velocidad = nullptr;
+  lv_obj_delete_async(screen_to_delete);
 }
 
 void crear_pantalla_bobinado() {
@@ -818,12 +1005,12 @@ void crear_pantalla_control_manual() {
 void crear_pantalla_ajustes() {
   screen_settings = lv_obj_create(NULL);
   lv_obj_add_style(screen_settings, &UI::style_main_bg, 0);
-  lv_obj_add_event_cb(screen_settings, refresh_system_info_event_cb,
-                      LV_EVENT_SCREEN_LOADED, NULL);
   lv_obj_set_layout(screen_settings, LV_LAYOUT_FLEX);
   lv_obj_set_flex_flow(screen_settings, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_flex_align(screen_settings, LV_FLEX_ALIGN_START,
+                        LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
   lv_obj_set_style_pad_all(screen_settings, 5, 0);
-  lv_obj_set_style_pad_row(screen_settings, 6, 0);
+  lv_obj_set_style_pad_row(screen_settings, 12, 0);
   lv_obj_clear_flag(screen_settings, LV_OBJ_FLAG_SCROLLABLE);
 
   UI::create_header(screen_settings, LV_SYMBOL_SETTINGS " AJUSTES",
@@ -833,43 +1020,23 @@ void crear_pantalla_ajustes() {
   lv_obj_set_height(card, LV_SIZE_CONTENT);
   lv_obj_set_layout(card, LV_LAYOUT_FLEX);
   lv_obj_set_flex_flow(card, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_flex_align(card, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER,
+                        LV_FLEX_ALIGN_CENTER);
   lv_obj_set_style_pad_all(card, 8, 0);
-  lv_obj_set_style_pad_row(card, 7, 0);
-
-  lv_obj_t *title = lv_label_create(card);
-  lv_label_set_text(title, "Retroiluminacion");
-  lv_obj_add_style(title, &UI::style_header, 0);
-  lv_obj_set_style_text_font(title, &lv_font_montserrat_16, 0);
+  lv_obj_set_style_pad_row(card, 10, 0);
 
   UI::create_button(card, "Abrir retroiluminacion", "AJUSTES_BRILLO",
                     &UI::style_btn_primary,
-                    UIHandlers::btn_navegacion_handler, 260, 38);
+                    UIHandlers::btn_navegacion_handler, 300, 38);
   UI::create_button(card, "Informacion del sistema", "AJUSTES_INFO",
                     &UI::style_btn_primary,
-                    UIHandlers::btn_navegacion_handler, 260, 38);
+                    UIHandlers::btn_navegacion_handler, 300, 38);
   UI::create_button(card, "Estado de la maquina", "AJUSTES_ESTADO",
                     &UI::style_btn_primary,
-                    UIHandlers::btn_navegacion_handler, 260, 38);
-
-  lv_obj_t *info_card = UI::create_card(screen_settings);
-  lv_obj_set_flex_grow(info_card, 1);
-  lv_obj_set_layout(info_card, LV_LAYOUT_FLEX);
-  lv_obj_set_flex_flow(info_card, LV_FLEX_FLOW_COLUMN);
-  lv_obj_set_style_pad_all(info_card, 8, 0);
-  lv_obj_set_style_pad_row(info_card, 4, 0);
-
-  lv_obj_t *diagnostic_title = lv_label_create(info_card);
-  lv_label_set_text(diagnostic_title, "Diagnostico hardware");
-  lv_obj_set_style_text_color(diagnostic_title, UI::color_text, 0);
-  lv_obj_set_style_text_font(diagnostic_title, &lv_font_montserrat_12, 0);
-
-  label_hardware_diagnostic = lv_label_create(info_card);
-  lv_obj_set_width(label_hardware_diagnostic, LV_PCT(100));
-  lv_label_set_long_mode(label_hardware_diagnostic, LV_LABEL_LONG_WRAP);
-  lv_obj_set_style_text_color(label_hardware_diagnostic, UI::color_text, 0);
-  lv_obj_set_style_text_font(label_hardware_diagnostic, &lv_font_montserrat_12,
-                             0);
-  update_system_info_labels();
+                    UIHandlers::btn_navegacion_handler, 300, 38);
+  UI::create_button(card, "Actualizar firmware", "AJUSTES_FIRMWARE",
+                    &UI::style_btn_warning,
+                    UIHandlers::btn_navegacion_handler, 300, 38);
 }
 
 void crear_pantalla_ajustes_brillo() {
@@ -1053,11 +1220,83 @@ void crear_pantalla_ajustes_estado() {
   update_system_info_labels();
 }
 
+void crear_pantalla_ajustes_firmware() {
+  if (screen_settings_firmware) {
+    return;
+  }
+
+  screen_settings_firmware = lv_obj_create(NULL);
+  lv_obj_add_style(screen_settings_firmware, &UI::style_main_bg, 0);
+  lv_obj_set_layout(screen_settings_firmware, LV_LAYOUT_FLEX);
+  lv_obj_set_flex_flow(screen_settings_firmware, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_flex_align(screen_settings_firmware, LV_FLEX_ALIGN_CENTER,
+                        LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_set_style_pad_all(screen_settings_firmware, 8, 0);
+  lv_obj_set_style_pad_row(screen_settings_firmware, 14, 0);
+  lv_obj_add_flag(screen_settings_firmware, LV_OBJ_FLAG_SCROLLABLE);
+
+  lv_obj_t *title = lv_label_create(screen_settings_firmware);
+  lv_label_set_text(title, "Actualizar firmware");
+  lv_obj_add_style(title, &UI::style_header, 0);
+  lv_obj_set_style_text_font(title, &lv_font_montserrat_16, 0);
+
+  lv_obj_t *source_label = lv_label_create(screen_settings_firmware);
+  lv_label_set_text(source_label, "Fuente: tarjeta SD");
+  lv_obj_add_style(source_label, &UI::style_text_secondary, 0);
+
+  firmware_version_dropdown = lv_dropdown_create(screen_settings_firmware);
+  lv_obj_set_width(firmware_version_dropdown, 300);
+  lv_dropdown_set_options(firmware_version_dropdown, "Buscando versiones...");
+
+  firmware_status_label = lv_label_create(screen_settings_firmware);
+  lv_obj_set_width(firmware_status_label, 300);
+  lv_label_set_long_mode(firmware_status_label, LV_LABEL_LONG_WRAP);
+  lv_obj_set_style_text_align(firmware_status_label, LV_TEXT_ALIGN_CENTER, 0);
+  lv_label_set_text(firmware_status_label, "Preparando tarjeta SD...");
+
+  firmware_progress_bar = lv_bar_create(screen_settings_firmware);
+  lv_obj_set_width(firmware_progress_bar, 300);
+  lv_bar_set_range(firmware_progress_bar, 0, 100);
+  lv_bar_set_value(firmware_progress_bar, 0, LV_ANIM_OFF);
+
+  firmware_install_button = UI::create_button(
+      screen_settings_firmware, "Instalar seleccionada", "FIRMWARE_INSTALAR",
+      &UI::style_btn_success, firmware_install_button_cb, 300, 40);
+  lv_obj_add_state(firmware_install_button, LV_STATE_DISABLED);
+
+  firmware_restart_button = UI::create_button(
+      screen_settings_firmware, "Reiniciar para aplicar", "FIRMWARE_REINICIAR",
+      &UI::style_btn_primary, firmware_restart_button_cb, 300, 40);
+  lv_obj_add_state(firmware_restart_button, LV_STATE_DISABLED);
+
+  firmware_update_timer = lv_timer_create(firmware_update_timer_cb, 100, NULL);
+
+  UI::create_button(screen_settings_firmware, "Buscar en SD", "FIRMWARE_ESCANEAR",
+                    &UI::style_btn_primary, firmware_scan_button_cb, 300, 40);
+
+  lv_obj_t *wifi_label = lv_label_create(screen_settings_firmware);
+  lv_label_set_text(wifi_label, "Actualizacion por WiFi: proximamente");
+  lv_obj_add_style(wifi_label, &UI::style_text_secondary, 0);
+
+  lv_obj_t *btn_back = lv_btn_create(screen_settings_firmware);
+  lv_obj_set_size(btn_back, 140, 45);
+  lv_obj_add_style(btn_back, &UI::style_btn_primary, 0);
+  lv_obj_set_user_data(btn_back, (void *)"CERRAR_AJUSTES_FIRMWARE");
+  lv_obj_add_event_cb(btn_back, settings_submenu_back_handler,
+                      LV_EVENT_CLICKED, NULL);
+
+  lv_obj_t *label_back = lv_label_create(btn_back);
+  lv_label_set_text(label_back, LV_SYMBOL_LEFT " Volver");
+  lv_obj_center(label_back);
+
+  refresh_firmware_packages();
+}
+
 void init_all_screens() {
+  // Montar la SD durante el arranque, antes de que la UI empiece a usarla.
+  ProfileManager::init();
   crear_pantalla_principal();
   crear_pantalla_seleccion_modo();
-  crear_pantalla_configuracion();
-  crear_pantalla_configuracion_honeycomb();
   crear_pantalla_bobinado();
   crear_pantalla_control_manual();
   crear_pantalla_ajustes();

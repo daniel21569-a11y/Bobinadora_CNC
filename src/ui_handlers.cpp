@@ -1,5 +1,6 @@
 #include "ui_handlers.h"
 #include "config.h"
+#include "machine_controller.h"
 #include "persistence.h"
 #include "ui_components.h"
 #include "ui_screens.h"
@@ -111,12 +112,16 @@ void btn_navegacion_handler(lv_event_t *e) {
   if (strcmp(id, "SELECCION_MODO") == 0)
     lv_scr_load_anim(UIScreens::screen_modo_selection, LV_SCR_LOAD_ANIM_FADE_IN,
                      300, 0, false);
-  else if (strcmp(id, "CONFIG") == 0)
+  else if (strcmp(id, "CONFIG") == 0) {
+    UIScreens::crear_pantalla_configuracion();
     lv_scr_load_anim(UIScreens::screen_config, LV_SCR_LOAD_ANIM_FADE_IN, 300, 0,
                      false);
-  else if (strcmp(id, "CONFIG_HC") == 0)
+  }
+  else if (strcmp(id, "CONFIG_HC") == 0) {
+    UIScreens::crear_pantalla_configuracion_honeycomb();
     lv_scr_load_anim(UIScreens::screen_config_honeycomb,
                      LV_SCR_LOAD_ANIM_FADE_IN, 300, 0, false);
+  }
   else if (strcmp(id, "BOBINADO") == 0)
     lv_scr_load_anim(UIScreens::screen_winding, LV_SCR_LOAD_ANIM_FADE_IN, 300,
                      0, false);
@@ -141,6 +146,11 @@ void btn_navegacion_handler(lv_event_t *e) {
     lv_scr_load_anim(UIScreens::screen_settings_machine_status,
                      LV_SCR_LOAD_ANIM_FADE_IN, 300, 0, false);
   }
+  else if (strcmp(id, "AJUSTES_FIRMWARE") == 0) {
+    UIScreens::crear_pantalla_ajustes_firmware();
+    lv_scr_load_anim(UIScreens::screen_settings_firmware,
+                     LV_SCR_LOAD_ANIM_FADE_IN, 300, 0, false);
+  }
   else if (strcmp(id, "PRINCIPAL") == 0)
     lv_scr_load_anim(UIScreens::screen_main, LV_SCR_LOAD_ANIM_FADE_IN, 300, 0,
                      false);
@@ -153,11 +163,13 @@ void btn_modo_handler(lv_event_t *e) {
   if (strcmp(id, "MODO_TRANSFORMADOR") == 0) {
     Sistema::estado.modo = ModoBobinado::TRANSFORMADOR;
     Serial.println("Modo TRANSFORMADOR seleccionado");
+    UIScreens::crear_pantalla_configuracion();
     lv_scr_load_anim(UIScreens::screen_config, LV_SCR_LOAD_ANIM_FADE_IN, 300, 0,
                      false);
   } else if (strcmp(id, "MODO_HONEYCOMB") == 0) {
     Sistema::estado.modo = ModoBobinado::NIDO_ABEJA;
     Serial.println("Modo NIDO DE ABEJA seleccionado");
+    UIScreens::crear_pantalla_configuracion_honeycomb();
     lv_scr_load_anim(UIScreens::screen_config_honeycomb,
                      LV_SCR_LOAD_ANIM_FADE_IN, 300, 0, false);
   }
@@ -168,9 +180,7 @@ void btn_comando_handler(lv_event_t *e) {
   const char *id = (const char *)lv_obj_get_user_data(target);
 
   if (strcmp(id, "HOME") == 0) {
-    if (Sistema::estado.estado == EstadoBobinado::LISTO ||
-        Sistema::estado.estado == EstadoBobinado::PAUSADO ||
-        Sistema::estado.estado == EstadoBobinado::ERROR) {
+    if (MachineController::dispatch(winding::MachineCommand::Home)) {
       Serial.println(">>> COMANDO: HOME MANUAL <<<");
       bool homing_ok = homing_ejes();
       if (UIScreens::label_estado) {
@@ -187,17 +197,13 @@ void btn_comando_handler(lv_event_t *e) {
       }
     }
   } else if (strcmp(id, "INICIAR") == 0 &&
-             Sistema::estado.estado == EstadoBobinado::LISTO) {
-    Sistema::estado.iniciar_bobinado();
+             MachineController::dispatch(winding::MachineCommand::Start)) {
   } else if (strcmp(id, "PROSEGUIR") == 0 &&
-             Sistema::estado.estado == EstadoBobinado::PAUSADO) {
-    Sistema::estado.reanudar_bobinado();
+             MachineController::dispatch(winding::MachineCommand::Resume)) {
   } else if (strcmp(id, "PAUSAR") == 0 &&
-             Sistema::estado.estado == EstadoBobinado::BOBINANDO) {
-    Sistema::estado.pausar_bobinado();
+             MachineController::dispatch(winding::MachineCommand::Pause)) {
   } else if (strcmp(id, "PARAR") == 0) {
-    Sistema::estado.detener_bobinado();
-    Sistema::estado.reset_solicitado = true;
+    MachineController::dispatch(winding::MachineCommand::Stop);
   }
 }
 
@@ -326,29 +332,29 @@ void screen_winding_load_handler(lv_event_t *e) {
 
 void back_and_save_handler(lv_event_t *e) {
   if (save_transformador_from_ui_if_valid()) {
-    lv_scr_load_anim(UIScreens::screen_main, LV_SCR_LOAD_ANIM_FADE_IN, 300, 0,
-                     false);
+    lv_scr_load(UIScreens::screen_main);
+    UIScreens::destruir_pantalla_configuracion();
   }
 }
 
 void back_and_save_honeycomb_handler(lv_event_t *e) {
   if (save_honeycomb_from_ui_if_valid()) {
-    lv_scr_load_anim(UIScreens::screen_main, LV_SCR_LOAD_ANIM_FADE_IN, 300, 0,
-                     false);
+    lv_scr_load(UIScreens::screen_main);
+    UIScreens::destruir_pantalla_configuracion_honeycomb();
   }
 }
 
 void validate_and_wind_handler(lv_event_t *e) {
   if (save_transformador_from_ui_if_valid()) {
-    lv_scr_load_anim(UIScreens::screen_winding, LV_SCR_LOAD_ANIM_FADE_IN, 300,
-                     0, false);
+    lv_scr_load(UIScreens::screen_winding);
+    UIScreens::destruir_pantalla_configuracion();
   }
 }
 
 void validate_and_wind_honeycomb_handler(lv_event_t *e) {
   if (save_honeycomb_from_ui_if_valid()) {
-    lv_scr_load_anim(UIScreens::screen_winding, LV_SCR_LOAD_ANIM_FADE_IN, 300,
-                     0, false);
+    lv_scr_load(UIScreens::screen_winding);
+    UIScreens::destruir_pantalla_configuracion_honeycomb();
   }
 }
 

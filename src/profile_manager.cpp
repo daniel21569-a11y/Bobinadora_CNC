@@ -4,7 +4,50 @@
 namespace ProfileManager {
 
 static bool sd_initialized = false;
+static constexpr const char *SD_MOUNT_POINT = "/sd";
 static SPIClass spiSD(HSPI); // Instancia estática de SPI para SD
+
+static void run_sd_diagnostic_if_requested() {
+  constexpr const char *FLAG = "/sd_diagnostic.flag";
+  constexpr const char *DATA = "/sd_diagnostic.bin";
+  if (!SD.exists(FLAG))
+    return;
+
+  Serial.println("[SD-DIAG] Marcador detectado; iniciando prueba aislada");
+  File file = SD.open(DATA, FILE_READ);
+  if (!file) {
+    Serial.println("[SD-DIAG] ERROR: no se pudo abrir sd_diagnostic.bin");
+    SD.remove(FLAG);
+    return;
+  }
+
+  const size_t expected = file.size();
+  uint8_t buffer[512];
+  bool ok = expected > 0;
+  for (uint8_t pass = 1; pass <= 10 && ok; ++pass) {
+    if (!file.seek(0)) {
+      ok = false;
+      break;
+    }
+    size_t total = 0;
+    while (file.available()) {
+      size_t count = file.read(buffer, sizeof(buffer));
+      if (count == 0) {
+        ok = false;
+        break;
+      }
+      total += count;
+      delay(1);
+    }
+    Serial.printf("[SD-DIAG] Lectura %u/10: %u/%u bytes %s\n", pass,
+                  (unsigned)total, (unsigned)expected,
+                  (ok && total == expected) ? "OK" : "ERROR");
+    ok = ok && total == expected;
+  }
+  file.close();
+  SD.remove(FLAG);
+  Serial.printf("[SD-DIAG] RESULTADO: %s\n", ok ? "SD ESTABLE" : "SD INESTABLE");
+}
 
 bool init() {
   if (sd_initialized) {
@@ -17,14 +60,16 @@ bool init() {
   delay(100);
 
   // Configurar SPI para SD (igual que en el ejemplo AnimatedGIF)
+  pinMode(Hardware::SD::CS_PIN, OUTPUT);
+  digitalWrite(Hardware::SD::CS_PIN, HIGH);
   spiSD.begin(Hardware::SD::SCK_PIN, Hardware::SD::MISO_PIN,
               Hardware::SD::MOSI_PIN, Hardware::SD::CS_PIN);
 
   delay(50);
 
-  // Intentar montar SD con 10MHz (igual que en el ejemplo)
+  // Velocidad conservadora para mejorar la compatibilidad con adaptadores SD.
   Serial.println("[ProfileManager] Intentando montar SD...");
-  if (!SD.begin(Hardware::SD::CS_PIN, spiSD, 10000000)) { // 10MHz
+  if (!SD.begin(Hardware::SD::CS_PIN, spiSD, 10000000, SD_MOUNT_POINT)) {
     Serial.println("[ProfileManager] ERROR: No se pudo inicializar SD");
     Serial.println("[ProfileManager] Verifica:");
     Serial.println("  - Que haya una tarjeta SD insertada");
@@ -59,6 +104,7 @@ bool init() {
   Serial.printf("[ProfileManager] Usado: %lluMB\n", cardUsed);
 
   sd_initialized = true;
+  run_sd_diagnostic_if_requested();
   createDirectories();
 
   return true;

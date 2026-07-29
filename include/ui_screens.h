@@ -17,6 +17,7 @@ namespace UIScreens {
     extern lv_obj_t *screen_settings_brightness;
     extern lv_obj_t *screen_settings_info;
     extern lv_obj_t *screen_settings_machine_status;
+    extern lv_obj_t *screen_settings_firmware;
     
     // Campos de configuración TRANSFORMADOR
     extern lv_obj_t *ta_diametro_alambre;
@@ -49,12 +50,15 @@ namespace UIScreens {
     void crear_pantalla_seleccion_modo();
     void crear_pantalla_configuracion();
     void crear_pantalla_configuracion_honeycomb();
+    void destruir_pantalla_configuracion();
+    void destruir_pantalla_configuracion_honeycomb();
     void crear_pantalla_bobinado();
     void crear_pantalla_control_manual();
     void crear_pantalla_ajustes();
     void crear_pantalla_ajustes_brillo();
     void crear_pantalla_ajustes_info();
     void crear_pantalla_ajustes_estado();
+    void crear_pantalla_ajustes_firmware();
     
     void init_all_screens();
 }

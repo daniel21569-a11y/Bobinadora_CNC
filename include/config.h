@@ -7,9 +7,9 @@
 
 namespace FirmwareInfo {
 constexpr const char *NAME = "Bobinadora CNC";
-constexpr const char *VERSION = "10.4";
-constexpr const char *CODENAME = "Ajustes y Seguridad";
-constexpr const char *DISPLAY_NAME = "BOBINADORA CNC v10.4";
+constexpr const char *VERSION = "10.5";
+constexpr const char *CODENAME = "Actualizacion SD y estabilidad";
+constexpr const char *DISPLAY_NAME = "BOBINADORA CNC v10.5";
 } // namespace FirmwareInfo
 
 // =========================================================================
@@ -318,6 +318,7 @@ struct EstadoSistema {
   volatile bool movimiento_manual_activo = false;
   volatile bool mantener_motor_en_pausa = true;
   volatile bool bobinado_completado = false;
+  volatile bool homing_completado = false;
 
   // Tipo de movimiento manual actual
   TipoMovimiento movimiento_manual = TipoMovimiento::NINGUNO;
